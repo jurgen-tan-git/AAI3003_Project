@@ -1,0 +1,57 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python virtual environment
+venv/
+env/
+.venv/
+*.env/
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Dependency directories
+.env/
+node_modules/
+jspm_packages/
+
+# Distribution
+dist/
+build/
+
+# Visual Studio Code specific files
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Jupyter Notebook specific files
+.ipynb_checkpoints/
+
+# PyCharm files
+.idea/
+
+# SQLite database files
+*.sqlite3
+
+# Python log files
+*.log
+
+# Customarily used for environment variables
+.env
+
+# Firefox drivers
+geckodriver.exe
+geckodriver.log
