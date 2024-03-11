@@ -15,15 +15,26 @@ You can install the required packages using the following command:
 pip install -r requirements.txt
 
 ### Usage
+```
 python main.py
+```
 
 ### Configuration
 The script is currently set to run in headless mode using Firefox. If needed, you can customize the web driver options or use a different browser by modifying the script.
 
+```
 firefox_options = webdriver.FirefoxOptions()
 firefox_options.add_argument("--headless")
 browser = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=firefox_options)
+```
 
+
+Add this line of code to virtual environment activate file to not get the API limit exceed error.
+Replace it with your own Github Personal Access Token
+
+```
+export GH_TOKEN = "asdasdasdasd"
+```
 
 ### License
 This project is licensed under the MIT License - see the LICENSE file for details.
