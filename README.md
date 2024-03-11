@@ -12,8 +12,9 @@ Make sure you have the following installed before running the script:
 
 You can install the required packages using the following command:
 
+```
 pip install -r requirements.txt
-
+```
 ### Usage
 ```
 python main.py
