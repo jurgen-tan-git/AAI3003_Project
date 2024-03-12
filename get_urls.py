@@ -6,11 +6,12 @@ from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 
 
-def scrape_today_online(url, output_file='todayonline.txt'):
+def scrape_today_online(url, outputfile):
     # Set up Firefox WebDriver
     firefox_options = webdriver.FirefoxOptions()
     firefox_options.add_argument("--headless")
@@ -27,7 +28,7 @@ def scrape_today_online(url, output_file='todayonline.txt'):
 
         # Extract news headlines and write to a file
         coverpage_news = page_soup.find_all("a", class_="list-object__heading-link")
-        with open(output_file, 'w') as f:
+        with open(outputfile, 'w') as f:
             for news in coverpage_news:
                 news_soap = BeautifulSoup(str(news), 'html.parser')
                 for a in news_soap.find_all('a', href=True):
@@ -41,6 +42,13 @@ def scrape_today_online(url, output_file='todayonline.txt'):
         browser.quit()
 
 if __name__ == '__main__':
-    url_to_scrape = 'https://www.todayonline.com'
-    output_filename = 'todayonline.txt'
-    scrape_today_online(url_to_scrape, output_filename)
+    categories = ['singapore', 'world', 'big-read', 'adulting-101', 'gen-y-speaks', 'gen-z-speaks', 'voices', 'commentary']
+    
+    # Create folder to store the output files
+    if not os.path.exists('URLs'):
+        os.makedirs('URLs')
+
+    for category in categories:
+        url_to_scrape = 'https://www.todayonline.com'
+        output_filename = './URLs/' + category + '.txt'
+        scrape_today_online(url_to_scrape, output_filename)

@@ -55,12 +55,12 @@ def extract_article_content(html):
 
     return content_list
 
-def save_to_file(title, content_list):
-    with open(f'articles/{title}.txt', 'w', encoding='utf-8') as f:
+def save_to_file(title, content_list, category):
+    with open(f'articles/{category}/{title}.txt', 'w', encoding='utf-8') as f:
         for content in content_list:
             f.write(content + "\n")
 
-def scrape_article(url):
+def scrape_article(url, category):
     # Create folder to store the articles
     if not os.path.exists('articles'):
         os.makedirs('articles')
@@ -79,21 +79,26 @@ def scrape_article(url):
         content_list = extract_article_content(html)
         if not content_list:
             logging.warning("No article content found.")
-
-        save_to_file(title, content_list)
+        save_to_file(title, content_list, category)
         logging.info("Article successfully scraped and saved.")
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
 
 if __name__ == '__main__':
-    with open('todayonline.txt', 'r') as f:
-        for url in tqdm(f, desc="Processing URLs", unit="URL"):
-            try:
-                url = url.strip()
-                logging.info(f"Processing URL: {url}")
-                scrape_article(url)
-            except Exception as e:
-                logging.error(f"Error processing URL '{url}': {e}")
+    categories = os.listdir('./URLs')
+    for category in categories:
+        logging.info(f"Processing category: {category}")
 
+        # Create folder to store the articles by categories
+        if not os.path.exists(f'articles/{category[:-4]}'):
+            os.makedirs(f'articles/{category[:-4]}')
+
+        with open(f'URLs/{category}', 'r') as f:
+            for url in tqdm(f, desc="Processing URLs", unit="URL"):
+                try:
+                    url = url.strip()
+                    scrape_article(url, category[:-4])
+                except Exception as e:
+                    logging.error(f"Error processing URL '{url}': {e}")
     logging.info("Processing complete.")
