@@ -9,6 +9,7 @@ Make sure you have the following installed before running the script:
 
     Python (3.12 recommended)
     Required Python packages as listed in the requirements.txt
+    Download the required geckodriver for your OS from https://github.com/mozilla/geckodriver/releases
 
 You can install the required packages using the following command:
 
