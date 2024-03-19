@@ -80,11 +80,11 @@ def test_model(model, test_loader):
     
 
 if __name__ == "__main__":
-    df = pd.read_csv('raw.csv')
+    df = pd.read_csv('multi_label_dataset.csv')
 
     tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
     texts = df['Text'].tolist()
-    labels = df.drop(columns=['Title', 'Text']).values  # Extract labels
+    labels = df.drop(columns=['File', 'Text']).values  # Extract labels
 
     X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=33)
 
