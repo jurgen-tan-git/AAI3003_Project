@@ -3,7 +3,9 @@ import os
 
 import numpy as np
 import torch
+from torch import optim
 from torch import nn
+from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from transformers import BertTokenizer
 
@@ -22,13 +24,15 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
     total = 0
     loss = 0
     with torch.no_grad():
-        for inputs, labels in tqdm(
+        iterator = tqdm(
             test_loader,
             desc="Test batches",
-            leave=True,
+            position=1,
+            leave=False,
             position=1,
             total=int(math.ceil(len(test_loader.dataset) / BATCH_SIZE)),
-        ):
+        )
+        for inputs, labels in iterator:
             inputs = {
                 key: value.to(DEVICE).squeeze(0)
                 for key, value in inputs.items()
@@ -38,7 +42,7 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
             if verbose:
-                print(predicted, labels)
+                iterator.write(f"{predicted}, {labels}")
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
             loss += criterion(outputs, labels).item() * inputs["input_ids"].size(0)
@@ -52,14 +56,29 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
 
 
 def train_model(
-    model,
-    train_loader,
-    test_loader,
-    criterion,
-    optimizer,
-    scheduler=None,
-    num_epochs=10,
-):
+    model: nn.Module,
+    train_loader: DataLoader,
+    test_loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: optim.Optimizer,
+    scheduler: optim.lr_scheduler._LRScheduler = None,
+    num_epochs: int = 10,
+) -> None:
+    """
+    Trains the given model using the provided data loaders, criterion, optimizer, and scheduler (optional).
+
+    Args:
+        model (torch.nn.Module): The model to be trained.
+        train_loader (DataLoader): The data loader for the training set.
+        test_loader (DataLoader): The data loader for the test/validation set.
+        criterion (nn.Module): The loss function used for training.
+        optimizer (optim.Optimizer): The optimizer used for updating the model's parameters.
+        scheduler (optim.lr_scheduler._LRScheduler, optional): The learning rate scheduler (default: None).
+        num_epochs (int, optional): The number of training epochs (default: 10).
+
+    Returns:
+        None
+    """
     scaler = torch.cuda.amp.GradScaler() if DEVICE == "cuda" else None
     iterator = tqdm(range(num_epochs), desc="Epochs", position=0, leave=True)
     for _ in iterator:
@@ -72,6 +91,8 @@ def train_model(
             total=int(math.ceil(len(train_loader.dataset) / BATCH_SIZE)),
         ):
             running_loss = 0.0
+
+            # Mixed Precision
             with torch.autocast(device_type=DEVICE, dtype=torch.float16):
                 optimizer.zero_grad()
                 inputs = {
@@ -83,21 +104,24 @@ def train_model(
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
 
-                if scaler is not None:
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    optimizer.step()
-                running_loss += loss.item() * inputs["input_ids"].size(0)
+            if scaler is not None:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+            running_loss += loss.item() * inputs["input_ids"].size(0)
 
         running_loss /= len(train_loader.dataset)
         val_acc, val_loss = test_model(model, test_loader, criterion=criterion)
         if scheduler is not None:
             scheduler.step(val_loss)
 
-        iterator.write(f"Train Loss: {running_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+        iterator.write(
+            f"Train Loss: {running_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:3.2f}%"
+        )
         iterator.set_postfix_str(f"LR: {scheduler.get_last_lr()[0]:.4e}")
 
 
@@ -138,12 +162,7 @@ def main():
         num_epochs=NUM_EPOCHS,
     )
 
-    test_model(
-        model,
-        test_loader,
-        True,
-        nn.CrossEntropyLoss()
-    )
+    test_model(model, test_loader, True, nn.CrossEntropyLoss())
 
     # Save the model
     if not os.path.exists("./ckpts"):

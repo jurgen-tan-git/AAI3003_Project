@@ -88,6 +88,7 @@ class ArticleDataset(Dataset):
             padding="max_length",
             truncation=True,
             max_length=self.max_length,
+            truncation_strategy="only_first",
         )
         return {
             "input_ids": inputs.input_ids,
