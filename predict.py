@@ -3,81 +3,45 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+import numpy as np
 from sklearn.model_selection import train_test_split
-import torch.nn.functional as F
+from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 torch.manual_seed(33)
 
-def encode_labels(categories):
-    # Initialize LabelEncoder
-    label_encoder = LabelEncoder()
-
-    # Encode the 'Category' column
-    encoded_categories = label_encoder.fit_transform(categories)
-
-    # Convert the encoded categories to PyTorch tensor
-    categories_tensor = torch.tensor(encoded_categories, dtype=torch.long)
-
-    return categories_tensor.to('cuda')
-
-# Define the neural network architecture
-import torch.nn.functional as F
-
-class GenreClassifier(nn.Module):
-    def __init__(self, input_size, num_classes):
-        super(GenreClassifier, self).__init__()
-        self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=64, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool1d(kernel_size=3, stride=1, padding=1)
-        self.fc1 = nn.Linear(256, 512)
-        self.fc2 = nn.Linear(512, num_classes)
-        self.dropout = nn.Dropout(0.5)
-        self.batch_norm1 = nn.BatchNorm1d(64)
-        self.batch_norm2 = nn.BatchNorm1d(128)
-        self.batch_norm3 = nn.BatchNorm1d(256)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.batch_norm1(self.conv1(x))))
-        x = self.pool(F.relu(self.batch_norm2(self.conv2(x))))
-        x = self.pool(F.relu(self.batch_norm3(self.conv3(x))))
-        x = torch.flatten(x, 1)
-        x = self.dropout(x)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-# Define a custom dataset class
-class FeatureDataset(Dataset):
-    def __init__(self, features, labels):
-        self.features = features
+class GenreDataset(Dataset):
+    def __init__(self, texts, labels, tokenizer, max_length=512):
+        self.texts = texts
         self.labels = labels
+        self.tokenizer = tokenizer
+        self.max_length = max_length
 
     def __len__(self):
-        return len(self.features)
+        return len(self.texts)
 
     def __getitem__(self, idx):
-        return self.features[idx], self.labels[idx]
+        text = str(self.texts[idx])
+        label = self.labels[idx]
+        encoding = self.tokenizer(text, padding='max_length', max_length=self.max_length, return_tensors='pt', truncation=True)
+        output = {
+            'input_ids': encoding['input_ids'].flatten(),
+            'attention_mask': encoding['attention_mask'].flatten(),
+            'labels': torch.tensor(label, dtype=torch.float32)  # Convert labels to float tensor
+        }
+        return output
 
-# Prepare the dataset and data loaders
-def prepare_data(features, labels, batch_size=4):
-    dataset = FeatureDataset(features, labels)
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-    return data_loader
-
-# Define training function
-def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
+def train_model(model, train_loader, optimizer, criterion, num_epochs=10):
     model.train()
     for epoch in range(num_epochs):
         running_loss = 0.0
-        for inputs, labels in train_loader:
+        for batch in train_loader:
             optimizer.zero_grad()
-            inputs = inputs.unsqueeze(2)  # Add a channel dimension
-            outputs = model(inputs)
-            outputs = F.softmax(outputs, dim=1)
-
-            loss = criterion(outputs, labels)
+            input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device)
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            loss = outputs.loss
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -85,64 +49,60 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
 
 def test_model(model, test_loader):
     model.eval()
-    correct = 0
-    total = 0
+    all_true_labels = []
+    all_pred_labels = []
+
     with torch.no_grad():
-        for inputs, labels in test_loader:
-            inputs = inputs.unsqueeze(2)
-            outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            print(predicted, labels)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = 100 * correct / total
-    print('Accuracy on the test set: {:.2f}%'.format(accuracy))
+        for batch in test_loader:
+            input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+            labels = batch['labels'].to(device)
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask).logits
+            predicted_probs = torch.sigmoid(outputs)
+            predicted_labels = (predicted_probs > 0.5).long()
 
-if __name__ == "__main__":
-    df_features = pd.read_csv('features.csv')
-    df_features =df_features.dropna()
+            all_true_labels.extend(labels.cpu().detach().numpy())
+            all_pred_labels.extend(predicted_labels.cpu().detach().numpy())
 
-    features = df_features['Features'].apply(
-        lambda x: [float(i) for i in x.strip('[]').split()])
-    labels = df_features['Category'].values
+    all_true_labels = np.array(all_true_labels)
+    all_pred_labels = np.array(all_pred_labels)
 
-    # Convert features and labels to tensors
-    labels_tensor = encode_labels(labels)
-    features_tensor = torch.tensor(features, dtype=torch.float32)
+    # Accuracy
+    accuracy = accuracy_score(all_true_labels, all_pred_labels)
 
-    # Normalize features
-    mean = torch.mean(features_tensor, dim=0)
-    std = torch.std(features_tensor, dim=0)
-    features_tensor = (features_tensor - mean) / std
-    features_tensor = features_tensor.to('cuda')
+    # Precision, Recall, F1-score
+    precision = precision_score(all_true_labels, all_pred_labels, average='macro')
+    recall = recall_score(all_true_labels, all_pred_labels, average='macro')
+    f1 = f1_score(all_true_labels, all_pred_labels, average='macro')
+
+    return accuracy, precision, recall, f1
+
     
 
-    # Split the dataset into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(features_tensor.cpu(
-    ).numpy(), labels_tensor.cpu().numpy(), test_size=0.2, random_state=33)
+if __name__ == "__main__":
+    df = pd.read_csv('raw.csv')
 
-    # Convert the numpy arrays back to PyTorch tensors
-    X_train = torch.tensor(X_train, dtype=torch.float32).to('cuda')
-    X_test = torch.tensor(X_test, dtype=torch.float32).to('cuda')
-    y_train = torch.tensor(y_train, dtype=torch.long).to('cuda')
-    y_test = torch.tensor(y_test, dtype=torch.long).to('cuda')
-    print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+    texts = df['Text'].tolist()
+    labels = df.drop(columns=['Title', 'Text']).values  # Extract labels
 
-    # Define model parameters
-    input_size = features_tensor.shape[1]
-    num_classes = len(labels_tensor.unique())  # Number of unique genres
+    X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.2, random_state=33)
 
-    # Initialize model, criterion, and optimizer
-    model = GenreClassifier(input_size, num_classes).to('cuda')
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    train_dataset = GenreDataset(X_train, y_train, tokenizer)
+    test_dataset = GenreDataset(X_test, y_test, tokenizer)
 
-    # Prepare data loaders for training and testing sets
-    train_loader = prepare_data(X_train, y_train)
-    test_loader = prepare_data(X_test, y_test)
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=4, shuffle=False)
 
-    # Train the model
-    train_model(model, train_loader, criterion, optimizer)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Test the model
-    test_model(model, test_loader)
+    model = DistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased', problem_type="multi_label_classification", num_labels=len(train_dataset.labels[0])).to(device)
+    optimizer = optim.AdamW(model.parameters(), lr=0.001)
+    criterion = nn.BCEWithLogitsLoss()  # Binary cross-entropy loss for multi-label classification
+
+    train_model(model, train_loader, optimizer, criterion)
+    accuracy, precision, recall, f1 = test_model(model, test_loader)
+    print(f'Accuracy: {accuracy}')
+    print(f'Precision: {precision}')
+    print(f'Recall: {recall}')
+    print(f'F1-score: {f1}')
