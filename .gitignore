@@ -62,3 +62,9 @@ geckodriver.log
 # Data
 articles/
 summaries/
+
+# Model checkpoints
+ckpts/
+
+# Feature extraction
+*.csv
