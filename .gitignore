@@ -68,3 +68,6 @@ ckpts/
 
 # Feature extraction
 *.csv
+
+# Scraper data
+URLs/
