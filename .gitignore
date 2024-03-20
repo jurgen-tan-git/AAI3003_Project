@@ -65,6 +65,7 @@ summaries/
 
 # Model checkpoints
 ckpts/
+results/
 
 # Feature extraction
 *.csv
