@@ -60,8 +60,8 @@ geckodriver.log
 .python-version
 
 # Data
-articles/
-summaries/
+articles*/
+summaries*/
 
 # Model checkpoints
 ckpts/
