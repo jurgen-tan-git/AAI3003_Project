@@ -10,10 +10,10 @@ from tqdm.auto import tqdm
 from transformers import BertTokenizer
 
 from dataset.textdataset import ArticleDataset
-from models.bert_classifier import BertWithLinearClassifier
+from models.bert_classifier import BertWithLinearClassifier, BertWithAttentionClassifier
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 1
+BATCH_SIZE = 4
 NUM_EPOCHS = 10
 MAX_LENGTH = 512
 
@@ -29,21 +29,21 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
             desc="Test batches",
             position=1,
             leave=False,
-            position=1,
             total=int(math.ceil(len(test_loader.dataset) / BATCH_SIZE)),
         )
         for inputs, labels in iterator:
+            squeeze_dim = 1 if len(inputs["input_ids"].shape) == 3 else 0
             inputs = {
-                key: value.to(DEVICE).squeeze(0)
+                key: value.to(DEVICE).squeeze(squeeze_dim)
                 for key, value in inputs.items()
                 if key != "label"
             }
-            labels = labels.to(DEVICE)
+            labels = labels.float().to(DEVICE)
             outputs = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
+            predicted = outputs > 0.5
             if verbose:
                 iterator.write(f"{predicted}, {labels}")
-            total += labels.size(0)
+            total += labels.size(0) * labels.size(1)
             correct += (predicted == labels).sum().item()
             loss += criterion(outputs, labels).item() * inputs["input_ids"].size(0)
     accuracy = 100 * correct / total
@@ -95,12 +95,13 @@ def train_model(
             # Mixed Precision
             with torch.autocast(device_type=DEVICE, dtype=torch.float16):
                 optimizer.zero_grad()
+                squeeze_dim = 1 if len(inputs["input_ids"].shape) == 3 else 0
                 inputs = {
-                    key: value.to(DEVICE).squeeze(0)
+                    key: value.to(DEVICE).squeeze(squeeze_dim)
                     for key, value in inputs.items()
                     if key != "label"
                 }
-                labels = labels.to(DEVICE)
+                labels = labels.float().to(DEVICE)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
 
@@ -127,7 +128,9 @@ def train_model(
 
 def main():
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    dataset = ArticleDataset("./articles", tokenizer, MAX_LENGTH)
+    dataset = ArticleDataset(
+        "./articles", "./multi_label_dataset.csv", tokenizer, MAX_LENGTH
+    )
     train_size = int(0.8 * len(dataset))
     test_size = len(dataset) - train_size
     generator = torch.Generator().manual_seed(42)
@@ -140,14 +143,14 @@ def main():
     test_loader = torch.utils.data.DataLoader(
         test_dataset, batch_size=BATCH_SIZE, shuffle=True
     )
-    # model = BertWithAttentionClassifier(
-    #     "bert-base-uncased", len(dataset.categories), MAX_LENGTH
-    # )
-    model = BertWithLinearClassifier(
-        len(dataset.categories), MAX_LENGTH, 0.2, "bert-base-uncased"
+    model = BertWithAttentionClassifier(
+        "bert-base-uncased", len(dataset.categories), MAX_LENGTH, 100
     )
+    # model = BertWithLinearClassifier(
+    #     len(dataset.categories), MAX_LENGTH, 0.2, "bert-base-uncased"
+    # )
     model.to(DEVICE)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=3, factor=np.sqrt(0.1)
@@ -162,7 +165,7 @@ def main():
         num_epochs=NUM_EPOCHS,
     )
 
-    test_model(model, test_loader, True, nn.CrossEntropyLoss())
+    test_model(model, test_loader, True, criterion)
 
     # Save the model
     if not os.path.exists("./ckpts"):

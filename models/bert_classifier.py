@@ -140,8 +140,12 @@ class AttentionGenreClassifierBertMod(nn.Module):
     def forward(self, x: torch.Tensor):
         if self.use_attention:
             x, _ = self.attention(x, x, x)
-            x = x.permute(0, 2, 1)
-            x = x.unsqueeze(1)
+            if len(x.shape) > 3:
+                x = x.permute(0, 1, 3, 2)
+            else:
+                x = x.permute(0, 2, 1)
+                x = x.unsqueeze(1)
+        print(x.shape)
         x = self.network(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
@@ -171,7 +175,9 @@ class BertWithAttentionClassifier(nn.Module):
     def forward(self, inputs):
         outputs = self.bert(**inputs)
         last_hidden_state = outputs.last_hidden_state
+        print(last_hidden_state.shape)
         attention_output = self.net(last_hidden_state)
+        print(attention_output.shape)
         return attention_output
 
 
@@ -190,9 +196,9 @@ class BertWithLinearClassifier(nn.Module):
             model_name,
             max_position_embeddings=max_length,
         )
-        self.fc1 = nn.LazyLinear(512)
+        self.fc1 = nn.Linear(512 * 768, 512)
         self.fc2 = nn.Linear(512, num_classes)
-        self.relu = nn.ReLU(True)
+        self.relu = nn.ReLU()
         self.net = nn.Sequential(
             self.fc1, self.relu, nn.Dropout(dropout), self.fc2, nn.Dropout(dropout)
         )
@@ -200,6 +206,9 @@ class BertWithLinearClassifier(nn.Module):
     def forward(self, inputs):
         outputs = self.bert(**inputs)
         last_hidden_state = outputs.last_hidden_state
-        x = torch.flatten(last_hidden_state, 1)
+        if len(last_hidden_state.shape) > 3:
+            x = torch.flatten(last_hidden_state, 2)
+        else:
+            x = torch.flatten(last_hidden_state, 1)
         x = self.net(x)
         return x
