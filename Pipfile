@@ -102,6 +102,7 @@ seaborn = "*"
 datasets = "*"
 accelerate = "*"
 evaluate = "*"
+iterative-stratification = "*"
 
 [dev-packages]
 ipykernel = "*"
