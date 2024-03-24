@@ -60,10 +60,11 @@ def save_to_file(title, content_list, category):
         for content in content_list:
             f.write(content + "\n")
 
-def scrape_article(url, category):
-    # Create folder to store the articles
-    if not os.path.exists('articles'):
-        os.makedirs('articles')
+def scrape_article(url, category=None, save_to_file=False):
+    if save_to_file == True:
+        # Create folder to store the articles
+        if not os.path.exists('articles'):
+            os.makedirs('articles')
 
     try:
         html = get_html_content(url)
@@ -79,8 +80,13 @@ def scrape_article(url, category):
         content_list = extract_article_content(html)
         if not content_list:
             logging.warning("No article content found.")
-        save_to_file(title, content_list, category)
-        logging.info("Article successfully scraped and saved.")
+            return
+
+        if save_to_file == True and content_list:
+            save_to_file(title, content_list, category)
+            logging.info("Article successfully scraped and saved.")
+        else:
+            return content_list
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
@@ -98,7 +104,7 @@ if __name__ == '__main__':
             for url in tqdm(f, desc="Processing URLs", unit="URL"):
                 try:
                     url = url.strip()
-                    scrape_article(url, category[:-4])
+                    scrape_article(url, category[:-4], save_to_file=True)
                 except Exception as e:
                     logging.error(f"Error processing URL '{url}': {e}")
     logging.info("Processing complete.")
