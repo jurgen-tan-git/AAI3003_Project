@@ -12,7 +12,7 @@ if st.button('Summarise Article'):
         # Scrape the article
         article = scrape_article(url)
         print(article)
-        article_text = ''.join(article)
+        article_text = ' '.join(article)
         print(article_text)
 
         # Summarise the article
