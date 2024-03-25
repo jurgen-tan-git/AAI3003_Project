@@ -15,14 +15,14 @@ if st.button('Summarise Article'):
         article_text = ' '.join(article)
 
         # Predict the category of the article
-        predictions = predict_on_model(article)
+        postprocess_text = preprocess_text(article_text)
+        predictions = predict_on_model([postprocess_text])
+        print(predictions)
         labels = get_label(predictions[0])
         st.write('The article is classified under the following categories:', labels)
-        print(predictions)
         
         # Summarise the article
         article_text = summarize(article_text)
-        print(article_text)
         if not article_text:
             st.write('Failed to scrape the article. Please enter a valid URL.')
             st.stop()
