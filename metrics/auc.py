@@ -68,7 +68,7 @@ def k_fold_roc_curve(
 
             # ROC Curve
             fpr, tpr, tpr_thresh = sk_roc_curve(
-                y_onehot_test[:, i], fold["proba"][:, i]
+                y_onehot_test[:, i], fold["y_prob"][:, i]
             )
             intermediate_tpr_threshes.append(tpr_thresh[np.abs(tpr - 0.85).argmin()])
             tpr_interp = np.interp(fpr_mean, fpr, tpr)
@@ -77,7 +77,7 @@ def k_fold_roc_curve(
 
             # Precision-Recall Curve
             precision, recall, recall_thresh = precision_recall_curve(
-                y_onehot_test[:, i], fold["proba"][:, i]
+                y_onehot_test[:, i], fold["y_prob"][:, i]
             )
             prec_interp = np.interp(recall_mean, recall[::-1], precision[::-1])
             intermediate_precisions.append(prec_interp)
@@ -85,8 +85,8 @@ def k_fold_roc_curve(
                 recall_thresh[np.abs(recall - 0.85).argmin()]
             )
 
-        auroc = roc_auc_score(y_onehot_test, fold["proba"], average=average)
-        auprc = average_precision_score(y_onehot_test, fold["proba"], average=average)
+        auroc = roc_auc_score(y_onehot_test, fold["y_prob"], average=average)
+        auprc = average_precision_score(y_onehot_test, fold["y_prob"], average=average)
 
         if average == "macro":
             tprs.append(np.mean(intermediate_tprs, axis=0))
