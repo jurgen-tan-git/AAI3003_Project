@@ -11,6 +11,7 @@ if st.button('Summarise Article'):
     if url:
         # Scrape the article
         article = scrape_article(url)
+        print(article)
         article_text = ''.join(article)
         print(article_text)
 
