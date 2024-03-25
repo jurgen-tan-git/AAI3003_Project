@@ -1,6 +1,6 @@
 import streamlit as st
-from summarise import summarize
-from scraper import *
+from ..summarise import summarize
+from ..scraper import *
 
 st.title('TLDR News Summariser')
 
