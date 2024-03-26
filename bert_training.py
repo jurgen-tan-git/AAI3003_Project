@@ -14,7 +14,7 @@ from models.bert_classifier import BertWithLinearClassifier, BertWithAttentionCl
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 4
-NUM_EPOCHS = 10
+NUM_EPOCHS = 1
 MAX_LENGTH = 512
 
 
