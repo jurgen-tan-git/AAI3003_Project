@@ -6,6 +6,9 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
 import nltk
+import torch
+from transformers import DistilBertForSequenceClassification
+from transformers import DistilBertTokenizer
 
 def remove_tags(text):
   remove = re.compile(r'')
@@ -51,7 +54,7 @@ def vectorize_text(text):
     return X
 
 # Function to predict using the model
-def predict_on_model(text):
+def predict_on_randomforest(text):
     # Load the Random Forest model
     model = load('./weights/RandomForestClassifier_best_weights.pkl')
     X = vectorize_text(text)
@@ -66,8 +69,29 @@ def get_label(prediction):
     label_indices = np.nonzero(flat_prediction)[0]
     return [labels[i] for i in label_indices]
 
-# Test the function
-text = ['singapore singapore former transport minister iswaran monday march 25 handed fresh charge alleging obtained valuable thing public servant item said worth 18 956 94 total obtained man named lum kok seng according charge iswaran eight new charge said obtained item mr lum november 2021 november 2022 iswaran transport minister time said obtained consideration mr lum knew related contract work tanah merah mrt station cna asked corrupt practice investigation bureau investigating mr lum singaporean name currently listed judiciary hearing list identified mr david lum kok seng company website mr lum managing director singapore exchange listed lum chang holding subsidiary construction property development investment mr lum managing director since sept 1 1985 also director number subsidiary including lum chang building contractor lum chang property lum chang property investment lum chang asia pacific according lum chang website mr lum 40 year industry experience successfully led expansion group property development activity singapore malaysia united kingdom add mr lum market knowledge strategic business contact relentless entrepreneurial drive significantly contributed development group brother mr raymond lum kwan sung executive chairman lum chang holding since 1984 mr lum two son adrian lum wen hong kelvin lum wen sum also director company outside lum chang network mr david lum kok seng sits board director nanyang girl high school also shareholder lasalle college art chinese opera institute lum chang holding website list lum chang building contractor one subsidiary business construction alongside lum chang interior lum chang brandsbridge lum chang building contractor involved project singapore government two ongoing one land transport authority lta first tender awarded 2016 addition alteration work tanah merah station existing viaduct includes adding platform expected completed year concourse east west line station contract valued 325 million project awarded 2018 involves construction 1 95km section north south corridor tunnel ang mo kio ave 3 ang mo kio ave 9 according medium release contract worth 799 million lta awarded contract lum chang building contractor since 2019 authority said statement iswaran charge monday lum chang building contractor also previously designed constructed mrt station including downtown line bukit panjang mrt station tunnel apart lta lum chang building contractor done project singapore national water agency pub lum chang building contractor also accused workplace safety health act breach resulting death worker shajahan mohammad charged state court incident dec 15 2020 principal construction company blt geoworks employee worksite near junction upper changi road east koh sek lim road charge sheet state lum chang building contractor failed take measure ensure safety health employee leading mr shajahan death lum chang building contractor employee ong yen sheng appointed workplace safety health officer worksite also charged ong case set mention march 28 company slated april 16 cna report like visit cna asia']
-prediction = predict_on_model(text)
-label = get_label(prediction[0])
-print(prediction)
+def load_distilbert_model(device):
+    model = DistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased', num_labels=8)
+    model.load_state_dict(torch.load('./weights/distilbert.pth'))
+    model.eval()
+    return model.to(device)
+
+def predict_on_distilbert_model(text):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+    inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512).to(device)
+    model = load_distilbert_model(device)
+    outputs = model(**inputs)
+    predicted_probs = torch.sigmoid(outputs.logits)
+    predicted_labels = (predicted_probs > 0.5).long()
+    return predicted_labels
+
+# # Test the function
+# text = ['singapore singapore former transport minister iswaran monday march 25 handed fresh charge alleging obtained valuable thing public servant item said worth 18 956 94 total obtained man named lum kok seng according charge iswaran eight new charge said obtained item mr lum november 2021 november 2022 iswaran transport minister time said obtained consideration mr lum knew related contract work tanah merah mrt station cna asked corrupt practice investigation bureau investigating mr lum singaporean name currently listed judiciary hearing list identified mr david lum kok seng company website mr lum managing director singapore exchange listed lum chang holding subsidiary construction property development investment mr lum managing director since sept 1 1985 also director number subsidiary including lum chang building contractor lum chang property lum chang property investment lum chang asia pacific according lum chang website mr lum 40 year industry experience successfully led expansion group property development activity singapore malaysia united kingdom add mr lum market knowledge strategic business contact relentless entrepreneurial drive significantly contributed development group brother mr raymond lum kwan sung executive chairman lum chang holding since 1984 mr lum two son adrian lum wen hong kelvin lum wen sum also director company outside lum chang network mr david lum kok seng sits board director nanyang girl high school also shareholder lasalle college art chinese opera institute lum chang holding website list lum chang building contractor one subsidiary business construction alongside lum chang interior lum chang brandsbridge lum chang building contractor involved project singapore government two ongoing one land transport authority lta first tender awarded 2016 addition alteration work tanah merah station existing viaduct includes adding platform expected completed year concourse east west line station contract valued 325 million project awarded 2018 involves construction 1 95km section north south corridor tunnel ang mo kio ave 3 ang mo kio ave 9 according medium release contract worth 799 million lta awarded contract lum chang building contractor since 2019 authority said statement iswaran charge monday lum chang building contractor also previously designed constructed mrt station including downtown line bukit panjang mrt station tunnel apart lta lum chang building contractor done project singapore national water agency pub lum chang building contractor also accused workplace safety health act breach resulting death worker shajahan mohammad charged state court incident dec 15 2020 principal construction company blt geoworks employee worksite near junction upper changi road east koh sek lim road charge sheet state lum chang building contractor failed take measure ensure safety health employee leading mr shajahan death lum chang building contractor employee ong yen sheng appointed workplace safety health officer worksite also charged ong case set mention march 28 company slated april 16 cna report like visit cna asia']
+# prediction = predict_on_model(text)
+# label = get_label(prediction[0])
+# print(prediction)
+
+# prediction = predict_on_distilbert_model(text).to('cpu')
+# label = get_label(prediction[0])
+# print(prediction)
+# print(label)
