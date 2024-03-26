@@ -53,7 +53,7 @@ def vectorize_text(text):
 # Function to predict using the model
 def predict_on_model(text):
     # Load the Random Forest model
-    model = load('./weights/RandomForestClassifier_fold_3_weights.pkl')
+    model = load('./weights/RandomForestClassifier_best_weights.pkl')
     X = vectorize_text(text)
 
     # Make predictions
