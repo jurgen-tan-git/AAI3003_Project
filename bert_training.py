@@ -68,14 +68,26 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
 
     loss = criterion(torch.tensor(y_prob), torch.tensor(y_test)).item()
 
-    # Calculate metrics
+    # Calculate classification metrics
+    ## Get the best threshold
+    best_thresh = 0
+    max_f1 = 0.0
+    for thresh in sorted(y_prob.flatten()):
+        y_pred = (y_prob > thresh).astype(int)
+        f1 = f1_score(y_true, y_pred, average="samples")
+        if f1 > max_f1:
+            max_f1 = f1
+            best_thresh = thresh
+    y_pred = (y_prob > best_thresh).astype(int)
+
+    ## Calculate metrics
     acc = accuracy_score(y_test, y_pred)
     godbole_acc = godbole_accuracy(y_test, y_pred, "macro")
-    godbole_chance_acc = godbole_accuracy(y_test, y_test, "macro")
+    godbole_chance_acc = godbole_accuracy(y_test, np.ones_like(y_test) * np.mean(y_test), "macro")
     cov_error = coverage_error(y_test, y_prob)
     f1 = f1_score(y_test, y_pred, average="micro")
     lrap = label_ranking_average_precision_score(y_test, y_prob)
-    lrap_chance = label_ranking_average_precision_score(y_test, y_test)
+    lrap_chance = label_ranking_average_precision_score(y_test, np.ones_like(y_test) * np.mean(y_test))
     lrl = label_ranking_loss(y_test, y_prob)
     prec = precision_score(y_test, y_pred, average="micro")
     rec = recall_score(y_test, y_pred, average="micro")
@@ -85,10 +97,11 @@ def test_model(model, test_loader, verbose=False, criterion=nn.CrossEntropyLoss(
     mlm = multilabel_confusion_matrix(y_test, y_pred)
     auroc = roc_auc_score(y_test, y_prob, average="micro")
     ap = average_precision_score(y_test, y_prob, average="micro")
-    ap_chance_level = average_precision_score(y_test, y_test, average="micro")
+    ap_chance_level = average_precision_score(y_test, np.ones_like(y_test) * np.mean(y_test), average="micro")
     fill_rate_pred = np.sum(y_pred) / y_pred.size
     fill_rate = np.sum(y_test) / y_test.size
 
+    ## Print metrics if verbose
     if verbose:
         print(
             f"acc: {acc:.4f}",
