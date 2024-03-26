@@ -180,6 +180,7 @@ def k_fold_roc_curve(
     ax[0].legend()
     ax[1].legend()
     plt.show()
+    return fig
 
 
 def godbole_accuracy(
