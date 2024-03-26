@@ -103,6 +103,7 @@ datasets = "*"
 accelerate = "*"
 evaluate = "*"
 iterative-stratification = "*"
+rouge-metric = "*"
 
 [dev-packages]
 ipykernel = "*"
