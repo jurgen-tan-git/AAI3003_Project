@@ -68,7 +68,7 @@ def k_fold_roc_curve(
 
             # ROC Curve
             fpr, tpr, tpr_thresh = sk_roc_curve(
-                y_onehot_test[:, i], fold["proba"][:, i]
+                y_onehot_test[:, i], fold["y_prob"][:, i]
             )
             intermediate_tpr_threshes.append(tpr_thresh[np.abs(tpr - 0.85).argmin()])
             tpr_interp = np.interp(fpr_mean, fpr, tpr)
@@ -77,7 +77,7 @@ def k_fold_roc_curve(
 
             # Precision-Recall Curve
             precision, recall, recall_thresh = precision_recall_curve(
-                y_onehot_test[:, i], fold["proba"][:, i]
+                y_onehot_test[:, i], fold["y_prob"][:, i]
             )
             prec_interp = np.interp(recall_mean, recall[::-1], precision[::-1])
             intermediate_precisions.append(prec_interp)
@@ -85,8 +85,8 @@ def k_fold_roc_curve(
                 recall_thresh[np.abs(recall - 0.85).argmin()]
             )
 
-        auroc = roc_auc_score(y_onehot_test, fold["proba"], average=average)
-        auprc = average_precision_score(y_onehot_test, fold["proba"], average=average)
+        auroc = roc_auc_score(y_onehot_test, fold["y_prob"], average=average)
+        auprc = average_precision_score(y_onehot_test, fold["y_prob"], average=average)
 
         if average == "macro":
             tprs.append(np.mean(intermediate_tprs, axis=0))
@@ -113,13 +113,13 @@ def k_fold_roc_curve(
         ax[0].plot(
             fpr_mean,
             tprs[-1],
-            label=f"ROC {legend_key} {fold_idx + 1} (AUC = {aurocs[-1]:.2f})",
+            label=f"ROC {legend_key} {fold_idx + 1} (AUC = {aurocs[-1]:.4f})",
             alpha=0.3,
         )
         ax[1].plot(
             recall_mean,
             precisions[-1],
-            label=f"PRC {legend_key} {fold_idx + 1} (AUC = {auprcs[-1]:.2f})",
+            label=f"PRC {legend_key} {fold_idx + 1} (AUC = {auprcs[-1]:.4f})",
             alpha=0.3,
         )
 
@@ -141,7 +141,7 @@ def k_fold_roc_curve(
         ax[0].plot(
             fpr_mean,
             tpr_mean,
-            label=r"Mean ROC (AUC = %0.2f $\pm$ %0.2f)" % (auroc_mean, auroc_std),
+            label=r"Mean ROC (AUC = %0.4f $\pm$ %0.4f)" % (auroc_mean, auroc_std),
             lw=2,
             alpha=0.8,
         )
@@ -162,7 +162,7 @@ def k_fold_roc_curve(
         ax[1].plot(
             recall_mean,
             prec_mean,
-            label=r"Mean PRC (AUC = %0.2f $\pm$ %0.2f)" % (auprc_mean, auprc_std),
+            label=r"Mean PRC (AUC = %0.4f $\pm$ %0.4f)" % (auprc_mean, auprc_std),
             lw=2,
             alpha=0.8,
         )

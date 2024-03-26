@@ -1,29 +1,46 @@
+"""This module contains functions for loading and processing data for the transformers library.
+"""
+
 import os
 
 import pandas as pd
-from tqdm.auto import tqdm
 
 
-def load_data(labelled_csv: str | os.PathLike, articles_dir: str | os.PathLike):
+def load_data(
+    labelled_csv: str | os.PathLike,
+    articles_dir: str | os.PathLike,
+    use_original_text: bool = False,
+) -> pd.DataFrame:
+    """Loads data from a labelled CSV file and a directory of articles.
+
+    Args:
+        labelled_csv (str | os.PathLike): Path to a CSV file containing labels.
+        articles_dir (str | os.PathLike): Path to a directory containing articles.
+
+    Returns:
+        pd.DataFrame: A pandas DataFrame containing the labelled data.
+    """
     df = pd.read_csv(labelled_csv)
-    for root, _, files in tqdm(
-        os.walk(articles_dir),
-        desc="Loading articles",
-        unit="file",
-        position=0,
-        leave=False,
-    ):
-        for file in tqdm(
-            files, desc="Loading files", unit="file", position=1, leave=False
-        ):
+    for root, _, files in os.walk(articles_dir):
+        for file in files:
             if file.endswith(".txt"):
                 with open(os.path.join(root, file), "r", encoding="utf-8") as f:
                     text = f.read()
-                    df.loc[df["File"] == file, "Text"] = text
+                    if use_original_text:
+                        df.loc[df["File"] == file, "Text"] = text
+                    df.loc[df["File"] == file, "fp"] = os.path.join(root, file)
     return df
 
 
-def get_dict(df):
+def get_dict(df: pd.DataFrame) -> dict:
+    """Generates a dataset dictionary for the transformers library.
+
+    Args:
+        df (pd.DataFrame): A pandas DataFrame containing the dataset.
+
+    Returns:
+        dict: A dictionary containing the text, binary_targets, and labels.
+    """
     dataset = {}
     for _, row in df.iterrows():
         targets = row[2:]
