@@ -104,6 +104,7 @@ accelerate = "*"
 evaluate = "*"
 iterative-stratification = "*"
 fastprogress = "*"
+rouge-metric = "*"
 
 [dev-packages]
 ipykernel = "*"
