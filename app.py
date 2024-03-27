@@ -8,7 +8,7 @@ st.title('TLDR News Summariser')
 # User input for the URL
 url = st.text_input('Enter the URL of the news article you want to summarise:')
 
-if st.button('Summarise Article'):
+if st.button('Summarise Article & Predict Category(-ies)'):
     if url:
         # Scrape the article
         article = scrape_article(url)
