@@ -1,11 +1,21 @@
+"""Genre Classifier model for article genre prediction.
+"""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 
 class GenreClassifier(nn.Module):
-    def __init__(self, input_size, num_classes):
-        super(GenreClassifier, self).__init__()
+    """Genre Classifier model for article genre prediction.
+
+    Args:
+        input_size (int): Input size of the model.
+        num_classes (int): Number of output classes.
+    """
+
+    def __init__(self, input_size: int, num_classes: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.conv1 = nn.Conv1d(
             in_channels=input_size, out_channels=64, kernel_size=3, stride=1, padding=1
         )
@@ -35,7 +45,13 @@ class GenreClassifier(nn.Module):
 
 
 class MiddleChomp1d(nn.Module):
-    def __init__(self, chomp_size):
+    """Middle chomp layer for 1D convolutional neural networks.
+
+    Args:
+        chomp_size (int): Size of the chomp layer.
+    """
+
+    def __init__(self, chomp_size: int):
         super().__init__()
         self.chomp_size = chomp_size
         self.half_chomp = chomp_size // 2
@@ -45,15 +61,27 @@ class MiddleChomp1d(nn.Module):
 
 
 class GenreClassifierBlock(nn.Module):
+    """Genre Classifier block for 1D convolutional neural networks.
+
+    Args:
+        n_inputs (int): Number of input channels.
+        n_outputs (int): Number of output channels.
+        kernel_size (int): Size of the kernel.
+        stride (int): Stride of the convolution.
+        padding (int): Padding of the convolution.
+        dropout (float): Dropout rate.
+        dilation (int): Dilation factor.
+    """
+
     def __init__(
         self,
-        n_inputs,
-        n_outputs,
-        kernel_size,
-        stride,
-        padding,
-        dropout,
-        dilation,
+        n_inputs: int,
+        n_outputs: int,
+        kernel_size: int,
+        stride: int,
+        padding: int,
+        dropout: float,
+        dilation: int,
         *args,
         **kwargs,
     ) -> None:
@@ -114,15 +142,28 @@ class GenreClassifierBlock(nn.Module):
 
 
 class AttentionGenreClassifier(nn.Module):
+    """Attention-based genre classifier model.
+
+    Args:
+        num_inputs (int): Number of input channels.
+        num_outputs (int): Number of output classes.
+        num_channels (int): Number of channels for each level.
+        kernel_size (int): Size of the kernel.
+        dropout (float): Dropout rate.
+        use_attention (bool): Whether to use attention.
+        embed_dim (int, optional): Embedding dimension for attention.
+            Defaults to 768.
+    """
+
     def __init__(
         self,
-        num_inputs,
-        num_outputs,
-        num_channels,
-        kernel_size,
-        dropout,
+        num_inputs: int,
+        num_outputs: int,
+        num_channels: int,
+        kernel_size: int,
+        dropout: float,
         use_attention: bool,
-        embed_dim=768,
+        embed_dim: int = 768,
         *args,
         **kwargs,
     ) -> None:

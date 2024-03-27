@@ -1,14 +1,14 @@
-import os
+"""This module contains functions for calculating and plotting ROC and PRC curves
+"""
+
 from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import torch
 from sklearn.metrics import (
     auc,
     average_precision_score,
-    classification_report,
     precision_recall_curve,
     roc_auc_score,
 )
@@ -188,6 +188,7 @@ def godbole_accuracy(
 ) -> Union[np.ndarray, list]:
     """Calculates the accuracy score for each class or its average
         (Godbole and Sarawagi, 2004)
+        Also known as the Jaccard Index
 
     Args:
         y_true (np.ndarray): Binarized ground truth labels.

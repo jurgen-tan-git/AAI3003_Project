@@ -1,3 +1,6 @@
+"""Learner module for training PyTorch models with callbacks in the scikit-learn style.
+"""
+
 import abc
 import enum
 import os
@@ -15,6 +18,19 @@ from torch.utils.data import DataLoader
 
 
 class CallbackRequirement(enum.Flag):
+    """Callback requirements for the Learner class.
+
+    Attributes:
+        NONE: No requirements.
+        TRAIN_OUTPUT: Requires the training output.
+        VALID_OUTPUT: Requires the validation output.
+        TRAIN_LABEL: Requires the training label.
+        VALID_LABEL: Requires the validation label.
+        TRAIN_LOSS: Requires the training loss.
+        VALID_LOSS: Requires the validation loss.
+        PERSISTENT_DATA: Requires persistent data.
+    """
+
     NONE = 0
     TRAIN_OUTPUT = enum.auto()
     VALID_OUTPUT = enum.auto()
@@ -26,13 +42,156 @@ class CallbackRequirement(enum.Flag):
 
 
 class Callback(metaclass=abc.ABCMeta):
+    """Abstract base class for callbacks."""
+
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
         self.requirements: CallbackRequirement = CallbackRequirement.NONE
 
     @abc.abstractmethod
     def __call__(self, state_dict: dict, mbar: ConsoleMasterBar, **outputs):
+        """Run the callback.
+
+        Args:
+            state_dict (dict): The state dictionary containing the current
+                state of the model.
+            mbar (ConsoleMasterBar): The console progress bar.
+        """
         pass
+
+
+class MetricCallback(Callback):
+    """
+    A callback that computes a metric on the model's validation output and label.
+
+    Attributes:
+        requirements (CallbackRequirement): The requirements for this callback.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.requirements = (
+            CallbackRequirement.VALID_OUTPUT | CallbackRequirement.VALID_LABEL
+        )
+
+    def __call__(self, state_dict: dict, **outputs):
+        """
+        Update the state_dict with the metric values for the current batch.
+
+        Args:
+            state_dict (dict): A dictionary containing the current state of the training loop.
+            **outputs: A dictionary containing the outputs of the model for the current batch.
+
+        Returns:
+            None
+        """
+        if self.__repr__() not in state_dict["metrics"]:
+            state_dict["metrics"][self.__repr__()] = []
+        values = self._metric(
+            state_dict, outputs["valid_output"], outputs["valid_label"]
+        )
+
+        if isinstance(values, tuple):
+            # check if values is a namedtuple
+            if hasattr(values, "_fields") and hasattr(values, "_asdict"):
+                keys = values._fields
+                values = values._asdict()
+
+                for key in keys:
+                    if key not in state_dict["metrics"]:
+                        state_dict["metrics"][key] = []
+                    state_dict["metrics"][key].append(values[key])
+        else:
+            state_dict["metrics"][self.__repr__()].append(values)
+
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the class name with "Callback"
+        removed and converted to lowercase.
+
+        Returns:
+            str: The string representation of the class name.
+        """
+        return self.__class__.__name__.replace("Callback", "").lower()
+
+    @abc.abstractmethod
+    def _metric(self, state_dict: dict, valid_output, valid_label):
+        """
+        Calculates the metric for the validation set.
+
+        Args:
+            state_dict (dict): The state dictionary.
+            valid_output: The output of the validation set.
+            valid_label: The label of the validation set.
+
+        Returns:
+            The calculated metric for the validation set.
+        """
+
+
+class F1Callback(MetricCallback):
+    """A callback that computes the F1 score of a model on a validation set.
+
+    Args:
+        multilabel (bool, optional): Whether the targets are multi-label. Defaults to True.
+        threshold (float, optional): Positive prediction threshold. Defaults to 0.5.
+    """
+
+    def __init__(self, *args, multilabel=True, threshold=0.5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.multilabel = multilabel
+        self.threshold = threshold
+
+    def _metric(self, state_dict: dict, valid_output, valid_label):
+        if self.multilabel:
+            valid_preds = (valid_output > self.threshold).astype(int)
+            f1 = f1_score(valid_label, valid_preds, average="weighted")
+        else:
+            valid_preds = np.argmax(valid_output, axis=1)
+            f1 = f1_score(valid_label, valid_output, average="weighted")
+        return f1
+
+
+class AccuracyCallback(MetricCallback):
+    """
+    A callback that computes the accuracy of a model on a validation set.
+
+    Args:
+        *args: Positional arguments passed to the parent class.
+        multilabel (bool): Whether the problem is multilabel classification.
+            Defaults to False.
+        **kwargs: Keyword arguments passed to the parent class.
+    """
+
+    def __init__(
+        self, *args, threshold: float = 0.85, multilabel: bool = False, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.threshold = threshold
+        self.multilabel = multilabel
+
+    def _metric(self, state_dict: dict, valid_output, valid_label):
+        """
+        Computes the accuracy of the model on the validation set.
+
+        Args:
+            state_dict (dict): The state dictionary of the model.
+            valid_output (numpy.ndarray): The output of the model on the validation set.
+            valid_label (numpy.ndarray): The labels of the validation set.
+
+        Returns:
+            float: The accuracy of the model on the validation set.
+        """
+        if self.multilabel:
+            valid_preds = (valid_output >= self.threshold).astype(int)
+            valid_acc = np.sum(valid_preds == valid_label) / (
+                valid_preds.shape[0] * valid_preds.shape[1]
+            )
+        else:
+            valid_acc = np.sum(np.argmax(valid_output, axis=1) == valid_label) / len(
+                valid_label
+            )
+        return valid_acc
 
 
 class Learner(BaseEstimator):
@@ -44,9 +203,22 @@ class Learner(BaseEstimator):
         optimizer: optim.Optimizer = None,
         scheduler: optim.lr_scheduler._LRScheduler = None,
         scaler: GradScaler = None,
-        metrics: list[Callable] = None,
+        metrics: list[MetricCallback] = None,
         cbs: list[Callback] = None,
     ) -> None:
+        """Learner class for training PyTorch models with callbacks.
+
+        Args:
+            model (nn.Module): The PyTorch model to train.
+            criterion (nn.Module): The loss function to use.
+            device (torch.device): The device to use for training.
+            optimizer (optim.Optimizer, optional): Optimizer for training. Defaults to None.
+            scheduler (optim.lr_scheduler._LRScheduler, optional): Learning rate scheduler. Defaults to None.
+            scaler (GradScaler, optional): GradScaler for mixed precision. Defaults to None.
+            metrics (list[Callable], optional): List of metrics to run as callbacks.
+                Defaults to None.
+            cbs (list[Callback], optional): List of callbacks. Defaults to None.
+        """
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -73,6 +245,16 @@ class Learner(BaseEstimator):
         wd: float = 0.0,
         grad_clip: float = 0.0,
     ) -> None:
+        """Fits the model to the training data.
+
+        Args:
+            train_loader (DataLoader): The training data loader.
+            test_loader (DataLoader): The validation data loader.
+            num_epochs (int): The number of epochs to train for.
+            lr (float, optional): Learning rate. Defaults to 1e-3.
+            wd (float, optional): Weight decay. Defaults to 0.0.
+            grad_clip (float, optional): Gradient clipping. Defaults to 0.0.
+        """
         if self.optimizer is None:
             self.optimizer = optim.AdamW(
                 self.model.parameters(), lr=lr, weight_decay=wd
@@ -134,7 +316,22 @@ class Learner(BaseEstimator):
         scheduler: optim.lr_scheduler._LRScheduler,
         device: torch.device,
         scaler: GradScaler = None,
-    ):
+    ) -> np.ndarray:
+        """Train the model for one epoch.
+
+        Args:
+            model (nn.Module): The PyTorch model to train.
+            train_loader (DataLoader): The training data loader.
+            criterion (nn.Module): The loss function to use.
+            opt (optim.Optimizer): The optimizer to use.
+            scheduler (optim.lr_scheduler._LRScheduler): The learning rate scheduler.
+            device (torch.device): The device to use for training.
+            scaler (GradScaler, optional): GradScaler for mixed precision training.
+                Defaults to None.
+
+        Returns:
+            np.ndarray: The training losses for each batch.
+        """
         model.train()
         losses = []
         for data in progress_bar(train_loader, parent=self.mbar):
@@ -178,6 +375,14 @@ class Learner(BaseEstimator):
     def evaluate(
         self, test_loader: DataLoader
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Evaluate the model on the validation set.
+
+        Args:
+            test_loader (DataLoader): The validation data loader.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray, np.ndarray]: The validation loss, outputs, and labels.
+        """
         self.model.eval()
 
         with torch.no_grad():
@@ -226,6 +431,14 @@ class Learner(BaseEstimator):
         return losses, outputs, labels
 
     def predict(self, test_loader: DataLoader) -> np.ndarray:
+        """Predict the output of the model on the test set.
+
+        Args:
+            test_loader (DataLoader): The test data loader.
+
+        Returns:
+            np.ndarray: The model's output on the test set.
+        """
         _, outputs, _ = self.evaluate(test_loader)
         return outputs
 
@@ -463,130 +676,3 @@ class ModelProgressCallback(Callback):
             ],
             table=True,
         )
-
-
-class MetricCallback(Callback):
-    """
-    A callback that computes a metric on the model's validation output and label.
-
-    Attributes:
-        requirements (CallbackRequirement): The requirements for this callback.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.requirements = (
-            CallbackRequirement.VALID_OUTPUT | CallbackRequirement.VALID_LABEL
-        )
-
-    def __call__(self, state_dict: dict, **outputs):
-        """
-        Update the state_dict with the metric values for the current batch.
-
-        Args:
-            state_dict (dict): A dictionary containing the current state of the training loop.
-            **outputs: A dictionary containing the outputs of the model for the current batch.
-
-        Returns:
-            None
-        """
-        if self.__repr__() not in state_dict["metrics"]:
-            state_dict["metrics"][self.__repr__()] = []
-        values = self._metric(
-            state_dict, outputs["valid_output"], outputs["valid_label"]
-        )
-
-        if isinstance(values, tuple):
-            # check if values is a namedtuple
-            if hasattr(values, "_fields") and hasattr(values, "_asdict"):
-                keys = values._fields
-                values = values._asdict()
-
-                for key in keys:
-                    if key not in state_dict["metrics"]:
-                        state_dict["metrics"][key] = []
-                    state_dict["metrics"][key].append(values[key])
-        else:
-            state_dict["metrics"][self.__repr__()].append(values)
-
-    def __repr__(self) -> str:
-        """
-        Returns a string representation of the class name with "Callback"
-        removed and converted to lowercase.
-
-        Returns:
-            str: The string representation of the class name.
-        """
-        return self.__class__.__name__.replace("Callback", "").lower()
-
-    @abc.abstractmethod
-    def _metric(self, state_dict: dict, valid_output, valid_label):
-        """
-        Calculates the metric for the validation set.
-
-        Args:
-            state_dict (dict): The state dictionary.
-            valid_output: The output of the validation set.
-            valid_label: The label of the validation set.
-
-        Returns:
-            The calculated metric for the validation set.
-        """
-
-
-class F1Callback(MetricCallback):
-    def __init__(self, *args, multilabel=True, threshold=0.5, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.multilabel = multilabel
-        self.threshold = threshold
-
-    def _metric(self, state_dict: dict, valid_output, valid_label):
-        if self.multilabel:
-            valid_preds = (valid_output > self.threshold).astype(int)
-            f1 = f1_score(valid_label, valid_preds, average="weighted")
-        else:
-            valid_preds = np.argmax(valid_output, axis=1)
-            f1 = f1_score(valid_label, valid_output, average="weighted")
-        return f1
-
-
-class AccuracyCallback(MetricCallback):
-    """
-    A callback that computes the accuracy of a model on a validation set.
-
-    Args:
-        *args: Positional arguments passed to the parent class.
-        multilabel (bool): Whether the problem is multilabel classification.
-            Defaults to False.
-        **kwargs: Keyword arguments passed to the parent class.
-    """
-
-    def __init__(
-        self, *args, threshold: float = 0.85, multilabel: bool = False, **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.threshold = threshold
-        self.multilabel = multilabel
-
-    def _metric(self, state_dict: dict, valid_output, valid_label):
-        """
-        Computes the accuracy of the model on the validation set.
-
-        Args:
-            state_dict (dict): The state dictionary of the model.
-            valid_output (numpy.ndarray): The output of the model on the validation set.
-            valid_label (numpy.ndarray): The labels of the validation set.
-
-        Returns:
-            float: The accuracy of the model on the validation set.
-        """
-        if self.multilabel:
-            valid_preds = (valid_output >= self.threshold).astype(int)
-            valid_acc = np.sum(valid_preds == valid_label) / (
-                valid_preds.shape[0] * valid_preds.shape[1]
-            )
-        else:
-            valid_acc = np.sum(np.argmax(valid_output, axis=1) == valid_label) / len(
-                valid_label
-            )
-        return valid_acc

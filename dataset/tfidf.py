@@ -1,3 +1,6 @@
+"""TfIdfDataset class for loading data from a csv file and a directory of articles
+"""
+
 import os
 
 import numpy as np
@@ -11,6 +14,15 @@ from dataset.transformers_dataset import load_data
 
 
 class TfIdfDataset(Dataset):
+    """TfIdfDataset class for loading data from a csv file and a directory of articles
+
+    Args:
+        labelled_csv (str | os.PathLike): Labelled csv file containing the data.
+        articles_dir (str | os.PathLike): Directory containing the articles.
+        use_original_text (bool, optional): Uses unprocessed text. Defaults to False.
+        padded_shape (tuple[int, int], optional): Shape to pad samples to. Defaults to (0, 0).
+    """
+
     def __init__(
         self,
         labelled_csv: str | os.PathLike,
@@ -40,14 +52,34 @@ class TfIdfDataset(Dataset):
         return x.float(), torch.tensor(y, dtype=torch.float).squeeze()
 
     def get_feature_names(self) -> list[str]:
+        """Get the feature names.
+
+        Returns:
+            list[str]: List of feature names.
+        """
         return self.features
 
     def get_len_features(self) -> int:
+        """Get the length of the features.
+
+        Returns:
+            int: Length of the features.
+        """
         return len(self.features)
 
     def _csr_matrix_to_tensor(
         self, csr: scipy.sparse.csr_matrix, padding: tuple[int, int] = (0, 0)
     ) -> torch.Tensor:
+        """Convert a CSR matrix to a PyTorch tensor.
+
+        Args:
+            csr (scipy.sparse.csr_matrix): CSR matrix to convert.
+            padding (tuple[int, int], optional): Shape to pad output tensor to.
+                Defaults to (0, 0).
+
+        Returns:
+            torch.Tensor: PyTorch tensor.
+        """
         coo = csr.tocoo()
         values = coo.data
         indices = np.vstack((coo.row + padding[0], coo.col + padding[1]))
@@ -58,5 +90,11 @@ class TfIdfDataset(Dataset):
 
         return torch.sparse_coo_tensor(i, v, torch.Size(shape))
 
-    def set_padded_shape(self, padded_shape: tuple[int, int] = (0, 0)):
+    def set_padded_shape(self, padded_shape: tuple[int, int] = (0, 0)) -> None:
+        """Sets the padded shape after initialization.
+
+        Args:
+            padded_shape (tuple[int, int], optional): Padded shape.
+                Defaults to (0, 0).
+        """
         self.padded_shape = padded_shape

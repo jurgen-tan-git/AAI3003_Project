@@ -1,3 +1,6 @@
+"""This module contains the ArticleDataset class for loading and preprocessing article data.
+"""
+
 import os
 
 import pandas as pd
