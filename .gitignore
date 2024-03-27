@@ -74,4 +74,10 @@ results/
 URLs/
 
 # Documentation
-docs/
+docs/*
+!docs/make.bat
+!docs/conf.py
+!docs/Makefile
+!docs/*.rst
+!docs/_static/
+!docs/_templates/
