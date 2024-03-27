@@ -22,11 +22,10 @@ stop_words = set(stopwords.words("english"))
 def preprocess_text(text: str) -> str:
     """Preprocess the text by lowercasing, removing punctuation, and stopwords.
 
-    Args:
-        text (str): Text to preprocess.
-
-    Returns:
-        str: Preprocessed text.
+    :param text: Text to preprocess.
+    :type text: str
+    :return: Preprocessed text.
+    :rtype: str
     """
     # Lowercase the text
     text = text.lower()
@@ -47,13 +46,12 @@ def extract_bert_features(
 ) -> torch.Tensor:
     """Extract features from text using a pre-trained BERT model.
 
-    Args:
-        texts (list[str]): List of texts to extract features from.
-        model_name (str, optional): Model name or version to download.
-            Defaults to "bert-base-uncased".
-
-    Returns:
-        torch.Tensor: Extracted features from the text.
+    :param texts: List of texts to extract features from.
+    :type texts: list[str]
+    :param model_name: Model name or version to download, defaults to "bert-base-uncased"
+    :type model_name: str, optional
+    :return: Extracted features from the text.
+    :rtype: torch.Tensor
     """
     # Load pre-trained BERT model and tokenizer
     tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -76,9 +74,8 @@ def extract_bert_features(
 def main(download_nltk=False):
     """Run the feature extraction pipeline.
 
-    Args:
-        download_nltk (bool, optional): Downloads nltk punk, stopwords and wordnet.
-            Defaults to False.
+    :param download_nltk: Downloads nltk punk, stopwords and wordnet, defaults to False
+    :type download_nltk: bool, optional
     """
     if download_nltk:
         # Download NLTK resources (if not already downloaded)

@@ -26,15 +26,22 @@ NUM_FOLDS = 5  # Number of folds for cross-validation
 def preprocess_dataset(ds: Dataset, tokenizer: AutoTokenizer) -> Dataset:
     """Preprocess the dataset by tokenizing the text and adding the labels.
 
-    Args:
-        ds (Dataset): Dataset to preprocess.
-        tokenizer (AutoTokenizer): Tokenizer to use for tokenization.
-
-    Returns:
-        Dataset: Preprocessed dataset.
+    :param ds: Dataset to preprocess.
+    :type ds: Dataset
+    :param tokenizer: Tokenizer to use for tokenization.
+    :type tokenizer: AutoTokenizer
+    :return: Preprocessed dataset.
+    :rtype: Dataset
     """
 
-    def preprocess_function(sample):
+    def preprocess_function(sample: dict) -> dict:
+        """Preprocess the sample by tokenizing the text and adding the labels.
+
+        :param sample: Sample to preprocess.
+        :type sample: dict
+        :return: Preprocessed sample.
+        :rtype: dict
+        """
         example = tokenizer(sample["text"], padding=True, truncation=True)
         labels = sample["binary_targets"]
         example["labels"] = labels.float()
@@ -52,12 +59,15 @@ def finetune(
 ) -> None:
     """Fine-tune the BART model on the multi-label text classification task.
 
-    Args:
-        kf (KFold): KFold object for cross-validation.
-        tokenizer (AutoTokenizer): Tokenizer to use for tokenization.
-        ds (Dataset): Dataset to use for training and evaluation.
-        df (pd.DataFrame): DataFrame containing the labels.
-    """
+    :param kf: KFold object for cross-validation.
+    :type kf: KFold
+    :param tokenizer: Tokenizer to use for tokenization.
+    :type tokenizer: AutoTokenizer
+    :param ds: Dataset to use for training and evaluation.
+    :type ds: Dataset
+    :param df: DataFrame containing the labels.
+    :type df: pd.DataFrame
+    """    
     for fold, (train_idx, test_idx) in tqdm(
         enumerate(kf.split(ds["text"], ds["labels"])),
         total=NUM_FOLDS,

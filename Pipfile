@@ -112,6 +112,7 @@ autopep8 = "*"
 pylint = "*"
 ipywidgets = "*"
 multiprocess = "*"
+sphinx = "*"
 
 [requires]
 python_version = "3.12"

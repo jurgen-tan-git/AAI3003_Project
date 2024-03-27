@@ -8,9 +8,10 @@ from torch.utils.data import Dataset
 class FeatureDataset(Dataset):
     """Feature extraction dataset.
 
-    Args:
-        features (torch.Tensor): Text embeddings from the BERT model.
-        labels (torch.Tensor): Encoded labels.
+    :param features: Extracted features from the text.
+    :type features: torch.Tensor
+    :param labels: Encoded labels.
+    :type labels: torch.Tensor
     """
 
     def __init__(self, features: torch.Tensor, labels: torch.Tensor):

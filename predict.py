@@ -28,12 +28,10 @@ def encode_labels(
 ) -> tuple[torch.Tensor, LabelEncoder]:
     """Encode the 'Category' column using LabelEncoder and convert it to a PyTorch tensor.
 
-    Args:
-        categories (list[str] | np.ndarray): List of categories.
-
-    Returns:
-        tuple[torch.Tensor, LabelEncoder]: Encoded categories as PyTorch tensor
-            and the fitted LabelEncoder object.
+    :param categories: List of categories.
+    :type categories: list[str] | np.ndarray
+    :return: Encoded categories as PyTorch tensor and the fitted LabelEncoder object.
+    :rtype: tuple[torch.Tensor, LabelEncoder]
     """
     # Initialize LabelEncoder
     label_encoder = LabelEncoder()
@@ -53,13 +51,14 @@ def prepare_data(
 ) -> DataLoader:
     """Prepare the dataset and data loaders for training and testing.
 
-    Args:
-        features (torch.Tensor): Embeddings from the BERT model.
-        labels (torch.Tensor): Encoded labels.
-        batch_size (int, optional): Mini-batch size. Defaults to 4.
-
-    Returns:
-        DataLoader: Data loader for the dataset.
+    :param features: Embeddings from the BERT model.
+    :type features: torch.Tensor
+    :param labels: Encoded labels.
+    :type labels: torch.Tensor
+    :param batch_size: Mini-batch size, defaults to 4
+    :type batch_size: int, optional
+    :return: Data loader for the dataset.
+    :rtype: DataLoader
     """
     dataset = FeatureDataset(features, labels)
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
@@ -78,15 +77,20 @@ def train_model(
 ):
     """Train the model using the training and testing data loaders.
 
-    Args:
-        model (nn.Module): Model to train.
-        train_loader (DataLoader): DataLoader for the training set.
-        test_loader (DataLoader): DataLoader for the testing set.
-        criterion (nn.Module): Loss function.
-        optimizer (optim.Optimizer): Optimizer for training the model.
-        scheduler (optim.lr_scheduler._LRScheduler, optional): Learning rate scheduler.
-            Defaults to None.
-        num_epochs (int, optional): Number of epochs to train. Defaults to 10.
+    :param model: Model to train.
+    :type model: nn.Module
+    :param train_loader: DataLoader for the training set.
+    :type train_loader: DataLoader
+    :param test_loader: DataLoader for the testing set.
+    :type test_loader: DataLoader
+    :param criterion: Loss function.
+    :type criterion: nn.Module
+    :param optimizer: Optimizer for training the model.
+    :type optimizer: optim.Optimizer
+    :param scheduler: Learning rate scheduler, defaults to None
+    :type scheduler: optim.lr_scheduler._LRScheduler, optional
+    :param num_epochs: Number of epochs to train, defaults to 10
+    :type num_epochs: int, optional
     """
     model.train()
     scaler = torch.cuda.amp.GradScaler() if DEVICE == "cuda" else None
@@ -133,14 +137,16 @@ def test_model(
 ) -> tuple[float, float]:
     """Test the model on the test set.
 
-    Args:
-        model (nn.Module): Model to test.
-        test_loader (DataLoader): DataLoader for the test set.
-        verbose (bool, optional): Whether to print the accuracy. Defaults to False.
-        criterion (nn.Module, optional): Loss function. Defaults to nn.CrossEntropyLoss().
-
-    Returns:
-        tuple[float, float]: Accuracy and loss on the test set.
+    :param model: Model to test.
+    :type model: nn.Module
+    :param test_loader: DataLoader for the test set.
+    :type test_loader: DataLoader
+    :param verbose: Whether to print metrics, defaults to False
+    :type verbose: bool, optional
+    :param criterion: Loss function, defaults to nn.CrossEntropyLoss()
+    :type criterion: nn.Module, optional
+    :return: Accuracy and loss on the test set.
+    :rtype: tuple[float, float]
     """
     model.eval()
     correct = 0
@@ -165,8 +171,7 @@ def test_model(
 
 
 def main():
-    """The main function to train and test the genre classifier model.
-    """
+    """The main function to train and test the genre classifier model."""
     df_features = pd.read_csv("features.csv")
     df_features = df_features.dropna()
 

@@ -9,13 +9,18 @@ from torch.nn.utils.parametrizations import weight_norm
 class TfIdfAttention(nn.Module):
     """An attention model for TfIdf features.
 
-    Args:
-        n_inputs (int): Number of input channels.
-        n_outputs (int): Number of output channels.
-        embed_size (int): Attention embedding size.
-        hidden_size (list[int]): Hidden layer sizes.
-        n_heads (int): Number of attention heads.
-        dropout (float): Dropout rate.
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param embed_size: Attention embedding size.
+    :type embed_size: int
+    :param hidden_size: Hidden layer sizes.
+    :type hidden_size: list[int]
+    :param n_heads: Number of attention heads.
+    :type n_heads: int
+    :param dropout: Dropout rate.
+    :type dropout: float
     """
 
     def __init__(
@@ -64,11 +69,14 @@ class TfIdfAttention(nn.Module):
 class TfIdfDense(nn.Module):
     """A dense model for TfIdf features.
 
-    Args:
-        n_inputs (int): Number of input channels.
-        n_outputs (int): Number of output channels.
-        hidden_size (list[int]): Hidden layer sizes.
-        dropout (float): Dropout rate.
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param hidden_size: Hidden layer sizes.
+    :type hidden_size: list[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
     """
 
     def __init__(

@@ -11,13 +11,14 @@ from sumy.summarizers.lsa import LsaSummarizer
 def summarize(text: str, language: str = "english", sentences_count: int = 5) -> str:
     """Return a summary of the given text using LSA summarization technique.
 
-    Args:
-        text (str): Text to summarize.
-        language (str, optional): Language for the tokenizer. Defaults to "english".
-        sentences_count (int, optional): Number of sentences to be output. Defaults to 5.
-
-    Returns:
-        str: Summarized text.
+    :param text: Text to summarize.
+    :type text: str
+    :param language: Language for the tokenizer, defaults to "english"
+    :type language: str, optional
+    :param sentences_count: Number of sentences to output, defaults to 5
+    :type sentences_count: int, optional
+    :return: Summarized text
+    :rtype: str
     """
     parser = PlaintextParser.from_string(text, Tokenizer(language))
     summarizer = LsaSummarizer()
@@ -26,8 +27,7 @@ def summarize(text: str, language: str = "english", sentences_count: int = 5) ->
 
 
 def main():
-    """The main function to summarize articles using LSA summarizer.
-    """
+    """The main function to summarize articles using LSA summarizer."""
     categories = os.listdir("./articles")
     for category in categories:
         for file in os.listdir(f"./articles/{category}"):

@@ -1,6 +1,7 @@
 """This script scrapes articles from the URLs in the 'URLs' folder and saves
 them as text files in the 'articles' folder.
 """
+
 import argparse
 import logging
 import os
@@ -24,11 +25,10 @@ ARTICLES_DIR = "./articles"
 def get_html_content(url: str) -> str:
     """Get the HTML content of a webpage using Selenium WebDriver.
 
-    Args:
-        url (str): The URL of the webpage.
-
-    Returns:
-        str: The HTML content of the webpage.
+    :param url: The URL of the webpage.
+    :type url: str
+    :return: The HTML content of the webpage.
+    :rtype: str
     """
     browser = None
     try:
@@ -56,11 +56,10 @@ def get_html_content(url: str) -> str:
 def extract_title(html: str) -> str | None:
     """Extract the title of an article from its HTML content.
 
-    Args:
-        html (str): The HTML content of the article.
-
-    Returns:
-        str | None: The title of the article, or None if not found.
+    :param html: The HTML content of the article.
+    :type html: str
+    :return: The title of the article, or None if not found.
+    :rtype: str | None
     """
     page_soup = BeautifulSoup(html, "html5lib")
     title_element = page_soup.find("h1", class_="h1--page-title")
@@ -76,11 +75,10 @@ def extract_title(html: str) -> str | None:
 def extract_article_content(html: str) -> list[str]:
     """Extract the content of an article from its HTML content.
 
-    Args:
-        html (str): The HTML content of the article.
-
-    Returns:
-        list[str]: The content of the article as a list of paragraphs.
+    :param html: The HTML content of the article.
+    :type html: str
+    :return: The content of the article as a list of paragraphs.
+    :rtype: list[str]
     """
     page_soup = BeautifulSoup(html, "html5lib")
     article_content = page_soup.find_all("div", class_="text-long")
@@ -97,10 +95,12 @@ def extract_article_content(html: str) -> list[str]:
 def save_to_file(title: str, content_list: list[str], category: str) -> None:
     """Save the article content to a text file.
 
-    Args:
-        title (str): The title of the article.
-        content_list (list[str]): The content of the article as a list of paragraphs.
-        category (str): The category of the article.
+    :param title: The title of the article.
+    :type title: str
+    :param content_list: The content of the article as a list of paragraphs.
+    :type content_list: list[str]
+    :param category: The category of the article.
+    :type category: str
     """
     with open(f"{ARTICLES_DIR}/{category}/{title}.txt", "w", encoding="utf-8") as f:
         for content in content_list:
@@ -110,9 +110,10 @@ def save_to_file(title: str, content_list: list[str], category: str) -> None:
 def scrape_article(url: str, category: str) -> None:
     """Scrape an article and save its content to a text file.
 
-    Args:
-        url (str): The URL of the article.
-        category (str): The category of the article.
+    :param url: The URL of the article.
+    :type url: str
+    :param category: The category of the article.
+    :type category: str
     """
     # Create folder to store the articles
     if not os.path.exists(ARTICLES_DIR):
@@ -142,16 +143,14 @@ def scrape_article(url: str, category: str) -> None:
 def scrape_article_multiprocessing_safe(
     url: str, category: str
 ) -> tuple[str, str, str] | None:
-    """Scrape an article and return its title, HTML content, and category.
-    This function is multiprocessing-safe.
+    """Scrape an article and return its title, HTML content, and category. This function is multiprocessing-safe.
 
-    Args:
-        url (str): URL of the article.
-        category (str): Category of the article.
-
-    Returns:
-        tuple[str, str, str] | None: A tuple containing the title, HTML content,
-            and category of the article, or None if an error occurred.
+    :param url: URL of the article.
+    :type url: str
+    :param category: Category of the article.
+    :type category: str
+    :return: A tuple containing the title, HTML content, and category of the article, or None if an error occurred.
+    :rtype: tuple[str, str, str] | None
     """
     try:
         html = get_html_content(url)
@@ -173,10 +172,12 @@ def scrape_article_multiprocessing_safe(
 def extract_and_save_article(title: str, html: str, category: str) -> None:
     """Extract and save the article content to a text file.
 
-    Args:
-        title (str): The title of the article.
-        html (str): The HTML content of the article.
-        category (str): The category of the article.
+    :param title: The title of the article.
+    :type title: str
+    :param html: The HTML content of the article.
+    :type html: str
+    :param category: The category of the article.
+    :type category: str
     """
     try:
         content_list = extract_article_content(html)
@@ -192,9 +193,8 @@ def extract_and_save_article(title: str, html: str, category: str) -> None:
 def main(do_multiprocess: bool = False):
     """The main function to scrape articles from the URLs.
 
-    Args:
-        do_multiprocess (bool, optional): Enables multiprocess scraping.
-            Defaults to False.
+    :param do_multiprocess: Enables multiprocess scraping, defaults to False
+    :type do_multiprocess: bool, optional
     """
     categories = os.listdir("./URLs")
     for category in tqdm(categories, position=0, leave=True):

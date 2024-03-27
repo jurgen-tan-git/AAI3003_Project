@@ -16,11 +16,14 @@ from dataset.transformers_dataset import load_data
 class TfIdfDataset(Dataset):
     """TfIdfDataset class for loading data from a csv file and a directory of articles
 
-    Args:
-        labelled_csv (str | os.PathLike): Labelled csv file containing the data.
-        articles_dir (str | os.PathLike): Directory containing the articles.
-        use_original_text (bool, optional): Uses unprocessed text. Defaults to False.
-        padded_shape (tuple[int, int], optional): Shape to pad samples to. Defaults to (0, 0).
+    :param labelled_csv: Path to the labelled CSV file.
+    :type labelled_csv: str | os.PathLike
+    :param articles_dir: Directory containing the articles.
+    :type articles_dir: str | os.PathLike
+    :param use_original_text: Whether to use the original text or not.
+    :type use_original_text: bool, optional
+    :param padded_shape: Shape to pad the input tensor to.
+    :type padded_shape: tuple[int, int], optional
     """
 
     def __init__(
@@ -54,16 +57,16 @@ class TfIdfDataset(Dataset):
     def get_feature_names(self) -> list[str]:
         """Get the feature names.
 
-        Returns:
-            list[str]: List of feature names.
+        return: List of feature names.
+        rtype: list[str]
         """
         return self.features
 
     def get_len_features(self) -> int:
         """Get the length of the features.
 
-        Returns:
-            int: Length of the features.
+        return: Length of the features.
+        rtype: int
         """
         return len(self.features)
 
@@ -72,13 +75,12 @@ class TfIdfDataset(Dataset):
     ) -> torch.Tensor:
         """Convert a CSR matrix to a PyTorch tensor.
 
-        Args:
-            csr (scipy.sparse.csr_matrix): CSR matrix to convert.
-            padding (tuple[int, int], optional): Shape to pad output tensor to.
-                Defaults to (0, 0).
-
-        Returns:
-            torch.Tensor: PyTorch tensor.
+        :param csr: CSR matrix to convert.
+        :type csr: scipy.sparse.csr_matrix
+        :param padding: Padding to add to the tensor, defaults to (0, 0)
+        :type padding: tuple[int, int], optional
+        :return: PyTorch tensor.
+        :rtype: torch.Tensor
         """
         coo = csr.tocoo()
         values = coo.data
@@ -93,8 +95,7 @@ class TfIdfDataset(Dataset):
     def set_padded_shape(self, padded_shape: tuple[int, int] = (0, 0)) -> None:
         """Sets the padded shape after initialization.
 
-        Args:
-            padded_shape (tuple[int, int], optional): Padded shape.
-                Defaults to (0, 0).
+        :param padded_shape: Shape to pad the input tensor to, defaults to (0, 0)
+        :type padded_shape: tuple[int, int], optional
         """
         self.padded_shape = padded_shape

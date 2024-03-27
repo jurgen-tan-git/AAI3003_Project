@@ -16,11 +16,10 @@ from transformers import EvalPrediction
 def compute_metrics(p: EvalPrediction) -> dict[str, float]:
     """Compute metrics for the multi-label text classification task.
 
-    Args:
-        p (EvalPrediction): EvalPrediction object containing predictions and labels.
-
-    Returns:
-        dict[str, float]: Dictionary containing the computed metrics.
+    :param p: EvalPrediction object containing predictions and labels.
+    :type p: EvalPrediction
+    :return: Dictionary containing the computed metrics.
+    :rtype: dict[str, float]
     """
     preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
     result = multi_label_metrics(preds, p.label_ids)
@@ -32,13 +31,14 @@ def multi_label_metrics(
 ) -> dict[str, float]:
     """Return the multi-label classification metrics.
 
-    Args:
-        predictions (np.ndarray): Predicted probabilities.
-        labels (np.ndarray): True labels.
-        threshold (float, optional): Threshold for positive prediction. Defaults to 0.5.
-
-    Returns:
-        dict[str, float]: Dictionary containing the computed metrics.
+    :param predictions: Predicted probabilities.
+    :type predictions: np.ndarray
+    :param labels: True labels.
+    :type labels: np.ndarray
+    :param threshold: Threshold for positive prediction, defaults to 0.5
+    :type threshold: float, optional
+    :return: Dictionary containing the computed metrics.
+    :rtype: dict[str, float]
     """
     sigmoid = nn.Sigmoid()
     proba = sigmoid(torch.tensor(predictions))

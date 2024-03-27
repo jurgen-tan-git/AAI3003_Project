@@ -28,25 +28,19 @@ def k_fold_roc_curve(
 ) -> None:
     """Plots the ROC and PRC curves for a k-fold cross validation
 
-    Args:
-        model_outputs (Dict[str, Union[np.ndarray, torch.Tensor]]): A dictionary
-            containing the model outputs for each fold. Each entry in the
-            dictionary should be a dictionary containing the keys "y" and "proba"
-            which are the ground truth labels and the predicted probabilities
-            respectively.
-        model_name (str): The name of the model.
-        num_classes (int, optional): Number of classification targets. Defaults
-            to 8.
-        average (str, optional): The type of averaging to use when computing the
-            ROC and PRC charts. Defaults to "macro".
-        legend_key (str, optional): The label to use for the fold number in the
-            plot legend. Defaults to "Fold".
-        show_mean_and_std (bool, optional): Shows the mean and standard
-            deviation of the ROC and PRC curves across all folds in the plot.
-            Defaults to True.
-
-    Raises:
-        NotImplementedError: If the average parameter is not "macro" or "weighted".
+    :param model_outputs: A dictionary containing the model outputs for each fold.
+    :type model_outputs: Dict[str, Union[np.ndarray, torch.Tensor]]
+    :param model_name: The name of the model.
+    :type model_name: str
+    :param num_classes: Number of classification targets, defaults to 8
+    :type num_classes: int, optional
+    :param average: The type of averaging to use when computing the ROC and PRC charts, defaults to "macro"
+    :type average: str, optional
+    :param legend_key: The label to use for the fold number in the plot legend, defaults to "Fold"
+    :type legend_key: str, optional
+    :param show_mean_and_std: Shows the mean and standard deviation of the ROC and PRC curves across all folds in the plot, defaults to True
+    :type show_mean_and_std: bool, optional
+    :raise NotImplementedError: If the average parameter is not supported
     """
     fig, ax = plt.subplots(2, 1, figsize=(8.27, 11.69), dpi=100)
     tprs, aurocs, tpr_threshes = [], [], []
@@ -190,14 +184,14 @@ def godbole_accuracy(
         (Godbole and Sarawagi, 2004)
         Also known as the Jaccard Index
 
-    Args:
-        y_true (np.ndarray): Binarized ground truth labels.
-        y_pred (np.ndarray): Binarized predicted labels.
-        average (str, optional): Determines which form of averaging is used.
-            Defaults to None.
-
-    Returns:
-        np.ndarray: The accuracy score for each class
+    :param y_true: Binarized ground truth labels.
+    :type y_true: np.ndarray
+    :param y_pred: Binarized predicted labels.
+    :type y_pred: np.ndarray
+    :param average: Determines which form of averaging is used, defaults to None.
+    :type average: str, optional
+    :return: The accuracy score for each class
+    :rtype: Union[np.ndarray, list]
     """
     numerator = np.logical_and(y_pred, y_true).astype(int).sum(axis=1)
     denominator = np.logical_or(y_pred, y_true).astype(int).sum(axis=1)

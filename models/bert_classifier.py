@@ -10,14 +10,20 @@ from transformers import BertModel
 class GenreClassifierBlockBertMod(nn.Module):
     """GenreClassifier block with BERT.
 
-    Args:
-        n_inputs (int): Number of input channels.
-        n_outputs (int): Number of output channels.
-        kernel_size (int | tuple[int]): Kernel sizes.
-        stride (int | tuple[int]): Stride sizes.
-        padding (int | tuple[int]): Padding sizes.
-        dropout (float): Dropout rate.
-        dilation (int): Dilation factor.
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param kernel_size: Kernel sizes.
+    :type kernel_size: int | tuple[int]
+    :param stride: Stride sizes.
+    :type stride: int | tuple[int]
+    :param padding: Padding sizes.
+    :type padding: int | tuple[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param dilation: Dilation factor.
+    :type dilation: int
     """
 
     def __init__(
@@ -93,17 +99,26 @@ class GenreClassifierBlockBertMod(nn.Module):
 class AttentionGenreClassifierBertMod(nn.Module):
     """Modified GenreClassifier with BERT and attention.
 
-    Args:
-        num_inputs (int): Number of input channels.
-        num_classes (int): Number of output classes.
-        channels (list): List of channel sizes.
-        kernel_size (int | tuple): Kernel sizes.
-        dropout (float): Dropout rate.
-        padding (int | tuple): Padding sizes.
-        use_attention (bool, optional): Enables attention block. Defaults to True.
-        embed_dim (int, optional): Embedding dimension size. Defaults to 768.
-        max_length (int, optional): Maximum input length. Defaults to 512.
-        dilate (bool, optional): Enables dilated layers. Defaults to True.
+    :param num_inputs: Number of input channels.
+    :type num_inputs: int
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param channels: List of channel sizes.
+    :type channels: list[int]
+    :param kernel_size: Kernel sizes.
+    :type kernel_size: int | tuple[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param padding: Padding sizes.
+    :type padding: int | tuple[int]
+    :param use_attention: Enables attention block, defaults to True
+    :type use_attention: bool, optional
+    :param embed_dim: Embedding dimension size, defaults to 768
+    :type embed_dim: int, optional
+    :param max_length: Maximum input length, defaults to 512
+    :type max_length: int, optional
+    :param dilate: Enables dilated layers, defaults to True
+    :type dilate: bool, optional
     """
 
     def __init__(
@@ -182,11 +197,14 @@ class AttentionGenreClassifierBertMod(nn.Module):
 class BertWithAttentionClassifier(nn.Module):
     """BERT with an attention-based classifier.
 
-    Args:
-        model_name (str): Model name or version to download.
-        num_classes (int): Number of output classes.
-        max_length (int): Maximum input length.
-        attention_dim (int, optional): Attention dimension size. Defaults to 100.
+    :param model_name: Model name or version to download.
+    :type model_name: str
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param max_length: Maximum input length.
+    :type max_length: int
+    :param attention_dim: Attention dimension size, defaults to 100
+    :type attention_dim: int, optional
     """
 
     def __init__(
@@ -227,12 +245,14 @@ class BertWithAttentionClassifier(nn.Module):
 class BertWithLinearClassifier(nn.Module):
     """BERT with a linear classifier.
 
-    Args:
-        num_classes (int): Number of output classes.
-        max_length (int): Maximum input length.
-        dropout (float): Dropout rate.
-        model_name (str, optional): Model name or version to download.
-            Defaults to "bert-base-uncased".
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param max_length: Maximum input length.
+    :type max_length: int
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param model_name: Model name or version to download, defaults to "bert-base-uncased"
+    :type model_name: str, optional
     """
 
     def __init__(

@@ -20,15 +20,14 @@ from torch.utils.data import DataLoader
 class CallbackRequirement(enum.Flag):
     """Callback requirements for the Learner class.
 
-    Attributes:
-        NONE: No requirements.
-        TRAIN_OUTPUT: Requires the training output.
-        VALID_OUTPUT: Requires the validation output.
-        TRAIN_LABEL: Requires the training label.
-        VALID_LABEL: Requires the validation label.
-        TRAIN_LOSS: Requires the training loss.
-        VALID_LOSS: Requires the validation loss.
-        PERSISTENT_DATA: Requires persistent data.
+    :member NONE: No requirements.
+    :member TRAIN_OUTPUT: Requires the training output.
+    :member VALID_OUTPUT: Requires the validation output.
+    :member TRAIN_LABEL: Requires the training label.
+    :member VALID_LABEL: Requires the validation label.
+    :member TRAIN_LOSS: Requires the training loss.
+    :member VALID_LOSS: Requires the validation loss.
+    :member PERSISTENT_DATA: Requires persistent data.
     """
 
     NONE = 0
@@ -52,20 +51,19 @@ class Callback(metaclass=abc.ABCMeta):
     def __call__(self, state_dict: dict, mbar: ConsoleMasterBar, **outputs):
         """Run the callback.
 
-        Args:
-            state_dict (dict): The state dictionary containing the current
-                state of the model.
-            mbar (ConsoleMasterBar): The console progress bar.
+        :param state_dict: The state dictionary containing the current state of the model.
+        :type state_dict: dict
+        :param mbar: The console progress bar.
+        :type mbar: ConsoleMasterBar
         """
-        pass
 
 
 class MetricCallback(Callback):
     """
     A callback that computes a metric on the model's validation output and label.
 
-    Attributes:
-        requirements (CallbackRequirement): The requirements for this callback.
+    :param requirements: The requirements for this callback.
+    :type requirements: CallbackRequirement
     """
 
     def __init__(self, *args, **kwargs):
@@ -78,12 +76,10 @@ class MetricCallback(Callback):
         """
         Update the state_dict with the metric values for the current batch.
 
-        Args:
-            state_dict (dict): A dictionary containing the current state of the training loop.
-            **outputs: A dictionary containing the outputs of the model for the current batch.
-
-        Returns:
-            None
+        param: state_dict: The state dictionary containing the current state of the training loop.
+        type: state_dict: dict
+        param: outputs: A dictionary containing the outputs of the model for the current batch.
+        type: outputs: dict
         """
         if self.__repr__() not in state_dict["metrics"]:
             state_dict["metrics"][self.__repr__()] = []
@@ -109,8 +105,8 @@ class MetricCallback(Callback):
         Returns a string representation of the class name with "Callback"
         removed and converted to lowercase.
 
-        Returns:
-            str: The string representation of the class name.
+        :return: The string representation of the class name.
+        :rtype: str
         """
         return self.__class__.__name__.replace("Callback", "").lower()
 
@@ -119,22 +115,24 @@ class MetricCallback(Callback):
         """
         Calculates the metric for the validation set.
 
-        Args:
-            state_dict (dict): The state dictionary.
-            valid_output: The output of the validation set.
-            valid_label: The label of the validation set.
-
-        Returns:
-            The calculated metric for the validation set.
+        :param state_dict: The state dictionary.
+        :type state_dict: dict
+        :param valid_output: The output of the validation set.
+        :type valid_output: np.ndarray
+        :param valid_label: The label of the validation set.
+        :type valid_label: np.ndarray
+        :return: The calculated metric for the validation set.
+        :rtype: float
         """
 
 
 class F1Callback(MetricCallback):
     """A callback that computes the F1 score of a model on a validation set.
 
-    Args:
-        multilabel (bool, optional): Whether the targets are multi-label. Defaults to True.
-        threshold (float, optional): Positive prediction threshold. Defaults to 0.5.
+    :param multilabel: Whether the targets are multi-label, defaults to True.
+    :type multilabel: bool, optional
+    :param threshold: Positive prediction threshold, defaults to 0.5.
+    :type threshold: float, optional
     """
 
     def __init__(self, *args, multilabel=True, threshold=0.5, **kwargs):
@@ -156,31 +154,29 @@ class AccuracyCallback(MetricCallback):
     """
     A callback that computes the accuracy of a model on a validation set.
 
-    Args:
-        *args: Positional arguments passed to the parent class.
-        multilabel (bool): Whether the problem is multilabel classification.
-            Defaults to False.
-        **kwargs: Keyword arguments passed to the parent class.
+    :param multilabel: Whether the problem is multilabel classification.
+    :type multilabel: bool
+    :param threshold: Positive prediction threshold, defaults to 0.85.
+    :type threshold: float
     """
 
-    def __init__(
-        self, *args, threshold: float = 0.85, multilabel: bool = False, **kwargs
-    ):
-        super().__init__(*args, **kwargs)
+    def __init__(self, threshold: float = 0.85, multilabel: bool = False, **kwargs):
+        super().__init__(**kwargs)
         self.threshold = threshold
         self.multilabel = multilabel
 
-    def _metric(self, state_dict: dict, valid_output, valid_label):
+    def _metric(self, state_dict: dict, valid_output, valid_label) -> float:
         """
         Computes the accuracy of the model on the validation set.
 
-        Args:
-            state_dict (dict): The state dictionary of the model.
-            valid_output (numpy.ndarray): The output of the model on the validation set.
-            valid_label (numpy.ndarray): The labels of the validation set.
-
-        Returns:
-            float: The accuracy of the model on the validation set.
+        :param state_dict: The state dictionary of the model.
+        :type state_dict: dict
+        :param valid_output: The output of the model on the validation set.
+        :type valid_output: np.ndarray
+        :param valid_label: The labels of the validation set.
+        :type valid_label: np.ndarray
+        :return: The accuracy of the model on the validation set.
+        :rtype: float
         """
         if self.multilabel:
             valid_preds = (valid_output >= self.threshold).astype(int)
@@ -208,16 +204,22 @@ class Learner(BaseEstimator):
     ) -> None:
         """Learner class for training PyTorch models with callbacks.
 
-        Args:
-            model (nn.Module): The PyTorch model to train.
-            criterion (nn.Module): The loss function to use.
-            device (torch.device): The device to use for training.
-            optimizer (optim.Optimizer, optional): Optimizer for training. Defaults to None.
-            scheduler (optim.lr_scheduler._LRScheduler, optional): Learning rate scheduler. Defaults to None.
-            scaler (GradScaler, optional): GradScaler for mixed precision. Defaults to None.
-            metrics (list[Callable], optional): List of metrics to run as callbacks.
-                Defaults to None.
-            cbs (list[Callback], optional): List of callbacks. Defaults to None.
+        :param model: The PyTorch model to train.
+        :type model: nn.Module
+        :param criterion: The loss function to use.
+        :type criterion: nn.Module
+        :param device: The device to use for training.
+        :type device: torch.device
+        :param optimizer: Optimizer for training, defaults to None.
+        :type optimizer: optim.Optimizer, optional
+        :param scheduler: Learning rate scheduler, defaults to None.
+        :type scheduler: optim.lr_scheduler._LRScheduler, optional
+        :param scaler: GradScaler for mixed precision, defaults to None.
+        :type scaler: GradScaler, optional
+        :param metrics: List of metrics to run as callbacks, defaults to None.
+        :type metrics: list[MetricCallback], optional
+        :param cbs: List of callbacks, defaults to None.
+        :type cbs: list[Callback], optional
         """
         self.model = model
         self.criterion = criterion
@@ -247,13 +249,18 @@ class Learner(BaseEstimator):
     ) -> None:
         """Fits the model to the training data.
 
-        Args:
-            train_loader (DataLoader): The training data loader.
-            test_loader (DataLoader): The validation data loader.
-            num_epochs (int): The number of epochs to train for.
-            lr (float, optional): Learning rate. Defaults to 1e-3.
-            wd (float, optional): Weight decay. Defaults to 0.0.
-            grad_clip (float, optional): Gradient clipping. Defaults to 0.0.
+        :param train_loader: The training data loader.
+        :type train_loader: DataLoader
+        :param test_loader: The validation data loader.
+        :type test_loader: DataLoader
+        :param num_epochs: The number of epochs to train for.
+        :type num_epochs: int
+        :param lr: Learning rate, defaults to 1e-3.
+        :type lr: float, optional
+        :param wd: Weight decay, defaults to 0.0.
+        :type wd: float, optional
+        :param grad_clip: Gradient clipping, defaults to 0.0.
+        :type grad_clip: float, optional
         """
         if self.optimizer is None:
             self.optimizer = optim.AdamW(
@@ -319,18 +326,22 @@ class Learner(BaseEstimator):
     ) -> np.ndarray:
         """Train the model for one epoch.
 
-        Args:
-            model (nn.Module): The PyTorch model to train.
-            train_loader (DataLoader): The training data loader.
-            criterion (nn.Module): The loss function to use.
-            opt (optim.Optimizer): The optimizer to use.
-            scheduler (optim.lr_scheduler._LRScheduler): The learning rate scheduler.
-            device (torch.device): The device to use for training.
-            scaler (GradScaler, optional): GradScaler for mixed precision training.
-                Defaults to None.
-
-        Returns:
-            np.ndarray: The training losses for each batch.
+        :param model: The PyTorch model to train.
+        :type model: nn.Module
+        :param train_loader: The training data loader.
+        :type train_loader: DataLoader
+        :param criterion: The loss function to use.
+        :type criterion: nn.Module
+        :param opt: The optimizer to use.
+        :type opt: optim.Optimizer
+        :param scheduler: The learning rate scheduler.
+        :type scheduler: optim.lr_scheduler._LRScheduler
+        :param device: The device to use for training.
+        :type device: torch.device
+        :param scaler: GradScaler for mixed precision training, defaults to None.
+        :type scaler: GradScaler, optional
+        :return: The training losses for each batch.
+        :rtype np.ndarray
         """
         model.train()
         losses = []
@@ -377,11 +388,10 @@ class Learner(BaseEstimator):
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Evaluate the model on the validation set.
 
-        Args:
-            test_loader (DataLoader): The validation data loader.
-
-        Returns:
-            tuple[np.ndarray, np.ndarray, np.ndarray]: The validation loss, outputs, and labels.
+        :param test_loader: The validation data loader.
+        :type test_loader: DataLoader
+        :return: The validation loss, outputs, and labels.
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
         self.model.eval()
 
@@ -433,11 +443,10 @@ class Learner(BaseEstimator):
     def predict(self, test_loader: DataLoader) -> np.ndarray:
         """Predict the output of the model on the test set.
 
-        Args:
-            test_loader (DataLoader): The test data loader.
-
-        Returns:
-            np.ndarray: The model's output on the test set.
+        :param test_loader: The test data loader.
+        :type test_loader: DataLoader
+        :return: The model's output on the test set.
+        :rtype: np.ndarray
         """
         _, outputs, _ = self.evaluate(test_loader)
         return outputs
@@ -483,18 +492,11 @@ class PlotGraphCallback(Callback):
         """
         Update the training and validation loss values and plot them on a graph.
 
-        Args:
-            state_dict (dict): A dictionary containing the current state of the training process.
-                It should contain the following keys:
-                - "train_loss": A list of training loss values.
-                - "valid_loss": A list of validation loss values.
-                - "batch_size": The size of the training batches.
-                - "dataset_len": The total number of samples in the dataset.
-                - "num_epochs": The total number of epochs to train for.
-                - "epoch": The current epoch number.
-            mbar (ConsoleMasterBar): A progress bar object used to display the graph.
-            **outputs: Additional outputs that may be passed to the method (not used in this
-            implementation).
+        :param state_dict: A dictionary containing the current state of the training process.
+        :type state_dict: dict
+        :param mbar: A progress bar object used to display the graph.
+        :type mbar: ConsoleMasterBar
+        :param outputs: Additional outputs that may be passed to the method (not used in this implementation).
         """
         if len(state_dict["train_loss"]) == 0 or len(state_dict["valid_loss"]) == 0:
             return
@@ -544,16 +546,18 @@ class SaveModelCallback(Callback):
     """
     Callback to save the best, every or last model based on a given metric during training.
 
-    Args:
-        model (nn.Module): The PyTorch model to be saved.
-        strategy (str): The strategy to save the model. Can be "best", "every" or "last".
-        root_dir (str): The root directory to save the model.
-        model_pth (str): The path to save the model.
-        metric (str): The metric to use for saving the model. Can be "train_loss" or "valid_loss".
-
-    Raises:
-        NotImplementedError: If the strategy is not "best", "every" or "last".
-        NotImplementedError: If the metric is not "train_loss" or "valid_loss".
+    :param model: The PyTorch model to be saved.
+    :type model: nn.Module
+    :param strategy: The strategy to save the model. Can be "best", "every" or "last".
+    :type strategy: str
+    :param root_dir: The root directory to save the model.
+    :type root_dir: str
+    :param model_pth: The path to save the model.
+    :type model_pth: str
+    :param metric: The metric to use for saving the model. Can be "train_loss" or "valid_loss".
+    :type metric: str
+    :raise NotImplementedError: If the strategy is not "best", "every" or "last".
+    :raise NotImplementedError: If the metric is not "train_loss" or "valid_loss".
     """
 
     def __init__(
@@ -584,10 +588,11 @@ class SaveModelCallback(Callback):
         """
         Method to save the model based on the given strategy and metric.
 
-        Args:
-            state_dict (dict): The state dictionary containing the current epoch and metric values.
-            mbar (ConsoleMasterBar): The console progress bar.
-            **outputs: Additional outputs.
+        :param state_dict: The state dictionary containing the current epoch and metric values.
+        :type state_dict: dict
+        :param mbar: The console progress bar.
+        :type mbar: ConsoleMasterBar
+        :param outputs: Additional outputs.
         """
         if self.strategy == "best":
             if self.best_metric > state_dict[self.metric][-1]:
@@ -606,8 +611,8 @@ class SaveModelCallback(Callback):
         """
         Method to print the saved model information.
 
-        Args:
-            mbar (ConsoleMasterBar): The console progress bar.
+        :param mbar: The console progress bar.
+        :type mbar: ConsoleMasterBar
         """
         mbar.write(
             f"Model with {self.metric}: {self.best_metric} saved to "
@@ -619,15 +624,14 @@ class ModelProgressCallback(Callback):
     """
     A callback that logs the progress of a model during training and validation.
 
-    Attributes:
-        metrics (list): A list of metric names to log.
-        losses (list): A list of loss names to log.
-        requirements (CallbackRequirement): A flag that specifies the requirements of this callback.
-        values (dict): A dictionary that stores the latest values of the logged metrics and losses.
-
-    Methods:
-        __call__(self, state_dict: dict, mbar: ConsoleMasterBar, **outputs):
-            Logs the progress of the model.
+    :param metrics: A list of metric names to log.
+    :type metrics: list
+    :param losses: A list of loss names to log.
+    :type losses: list
+    :param requirements: A flag that specifies the requirements of this callback.
+    :type requirements: CallbackRequirement
+    :param values: A dictionary that stores the latest values of the logged metrics and losses.
+    :type values: dict
     """
 
     def __init__(self, metrics: list, *args, **kwargs):
@@ -645,13 +649,12 @@ class ModelProgressCallback(Callback):
         """
         Update the values of the monitored metrics and print them to the console.
 
-        Args:
-            state_dict (dict): A dictionary containing the current state of the training loop.
-            mbar (ConsoleMasterBar): A console progress bar to display the metrics.
-            **outputs: Additional outputs that may be passed to the callback.
-
-        Returns:
-            None
+        :param state_dict: A dictionary containing the current state of the training loop.
+        :type state_dict: dict
+        :param mbar: A console progress bar to display the metrics.
+        :type mbar: ConsoleMasterBar
+        :param outputs: Additional outputs that may be passed to the callback.
+        :type outputs: dict
         """
         if len(state_dict["train_loss"]) == 0 or len(state_dict["valid_loss"]) == 0:
             return

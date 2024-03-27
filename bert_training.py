@@ -46,14 +46,16 @@ def test_model(
 ) -> dict:
     """Test the given model on the provided data loader.
 
-    Args:
-        model (nn.Module): Model to be tested.
-        test_loader (DataLoader): Data loader for the test set.
-        verbose (bool, optional): Prints additional metrics. Defaults to False.
-        criterion (nn.Module, optional): Loss function. Defaults to nn.CrossEntropyLoss().
-
-    Returns:
-        dict: Dictionary containing the evaluation metrics.
+    :param model: Model to be tested.
+    :type model: nn.Module
+    :param test_loader: Data loader for the test set.
+    :type test_loader: DataLoader
+    :param verbose: Prints additional metrics, defaults to False
+    :type verbose: bool, optional
+    :param criterion: Loss fucntion, defaults to nn.CrossEntropyLoss()
+    :type criterion: nn.Module, optional
+    :return: Dictionary containing the evaluation metrics.
+    :rtype: dict
     """
     model.eval()
     y_true = []
@@ -170,20 +172,22 @@ def train_model(
     scheduler: optim.lr_scheduler._LRScheduler = None,
     num_epochs: int = 10,
 ) -> None:
-    """
-    Trains the given model using the provided data loaders, criterion, optimizer, and scheduler (optional).
+    """Trains the given model using the provided data loaders, criterion, optimizer, and scheduler (optional).
 
-    Args:
-        model (torch.nn.Module): The model to be trained.
-        train_loader (DataLoader): The data loader for the training set.
-        test_loader (DataLoader): The data loader for the test/validation set.
-        criterion (nn.Module): The loss function used for training.
-        optimizer (optim.Optimizer): The optimizer used for updating the model's parameters.
-        scheduler (optim.lr_scheduler._LRScheduler, optional): The learning rate scheduler (default: None).
-        num_epochs (int, optional): The number of training epochs (default: 10).
-
-    Returns:
-        None
+    :param model: The model to be trained.
+    :type model: nn.Module
+    :param train_loader: The data loader for the training set.
+    :type train_loader: DataLoader
+    :param test_loader: The data loader for the test/validation set.
+    :type test_loader: DataLoader
+    :param criterion: The loss function used for training.
+    :type criterion: nn.Module
+    :param optimizer: The optimizer used for updating the model's parameters.
+    :type optimizer: optim.Optimizer
+    :param scheduler: Learning rate scheduler for training, defaults to None
+    :type scheduler: optim.lr_scheduler._LRScheduler, optional
+    :param num_epochs: Number of epochs to train for, defaults to 10
+    :type num_epochs: int, optional
     """
     scaler = torch.cuda.amp.GradScaler() if DEVICE == "cuda" else None
     iterator = tqdm(range(num_epochs), desc="Epochs", position=0, leave=True)
@@ -238,8 +242,8 @@ def train_model(
 def main(train: bool):
     """Runs the main training loop for the BERT-based classifier.
 
-    Args:
-        train (bool): Whether to train the model or evaluate it.
+    :param train: Whether to train the model or evaluate it.
+    :type train: bool
     """
     sns.set_theme("paper", "whitegrid")
 

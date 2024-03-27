@@ -12,15 +12,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tqdm.auto import tqdm
 from webdriver_manager.firefox import GeckoDriverManager
 
-logging.basicConfig(level=logging.INFO) # Set up logging configuration
+logging.basicConfig(level=logging.INFO)  # Set up logging configuration
 
 
 def scrape_today_online(url: str, outputfile: str | os.PathLike) -> None:
     """Get URLs of news articles from Today Online website.
 
-    Args:
-        url (str): The URL of the website.
-        outputfile (str | os.PathLike): The output file to store the URLs.
+    :param url: The URL of the website.
+    :type url: str
+    :param outputfile: The output file to store the URLs.
+    :type outputfile: str | os.PathLike
     """
     # Set up Firefox WebDriver
     firefox_options = webdriver.FirefoxOptions()
