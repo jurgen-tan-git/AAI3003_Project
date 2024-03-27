@@ -13,12 +13,14 @@ def load_data(
 ) -> pd.DataFrame:
     """Loads data from a labelled CSV file and a directory of articles.
 
-    Args:
-        labelled_csv (str | os.PathLike): Path to a CSV file containing labels.
-        articles_dir (str | os.PathLike): Path to a directory containing articles.
-
-    Returns:
-        pd.DataFrame: A pandas DataFrame containing the labelled data.
+    :param labelled_csv: Path to the labelled CSV file.
+    :type labelled_csv: str | os.PathLike
+    :param articles_dir: Directory containing the articles.
+    :type articles_dir: str | os.PathLike
+    :param use_original_text: Whether to use the original text or not.
+    :type use_original_text: bool, optional
+    :return: A pandas DataFrame containing the labelled data.
+    :rtype: pd.DataFrame
     """
     df = pd.read_csv(labelled_csv)
     for root, _, files in os.walk(articles_dir):
@@ -35,11 +37,10 @@ def load_data(
 def get_dict(df: pd.DataFrame) -> dict:
     """Generates a dataset dictionary for the transformers library.
 
-    Args:
-        df (pd.DataFrame): A pandas DataFrame containing the dataset.
-
-    Returns:
-        dict: A dictionary containing the text, binary_targets, and labels.
+    :param df: A pandas DataFrame containing the dataset.
+    :type df: pd.DataFrame
+    :return: A dictionary containing the text, binary_targets, and labels.
+    :rtype: dict
     """
     dataset = {}
     for _, row in df.iterrows():

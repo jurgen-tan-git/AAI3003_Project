@@ -1,16 +1,16 @@
+"""This module contains functions for fine-tuning a BART model on a multi-label
+text classification task.
+"""
+
 import os
 
-import numpy as np
 import pandas as pd
-import torch
 from datasets import Dataset
 from sklearn.model_selection import KFold
 from tqdm.auto import tqdm
 from transformers import (
-    AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    DataCollatorWithPadding,
     Trainer,
     TrainingArguments,
 )
@@ -18,13 +18,30 @@ from transformers import (
 from dataset.transformers_dataset import get_dict, load_data
 from metrics.transformers_evaluate import compute_metrics
 
-BATCH_SIZE = 2
-NUM_LABELS = 8
-NUM_FOLDS = 5
+BATCH_SIZE = 2  # Batch size for training
+NUM_LABELS = 8  # Number of labels in the dataset
+NUM_FOLDS = 5  # Number of folds for cross-validation
 
 
-def preprocess_dataset(ds, tokenizer):
-    def preprocess_function(sample):
+def preprocess_dataset(ds: Dataset, tokenizer: AutoTokenizer) -> Dataset:
+    """Preprocess the dataset by tokenizing the text and adding the labels.
+
+    :param ds: Dataset to preprocess.
+    :type ds: Dataset
+    :param tokenizer: Tokenizer to use for tokenization.
+    :type tokenizer: AutoTokenizer
+    :return: Preprocessed dataset.
+    :rtype: Dataset
+    """
+
+    def preprocess_function(sample: dict) -> dict:
+        """Preprocess the sample by tokenizing the text and adding the labels.
+
+        :param sample: Sample to preprocess.
+        :type sample: dict
+        :return: Preprocessed sample.
+        :rtype: dict
+        """
         example = tokenizer(sample["text"], padding=True, truncation=True)
         labels = sample["binary_targets"]
         example["labels"] = labels.float()
@@ -39,7 +56,18 @@ def finetune(
     tokenizer: AutoTokenizer,
     ds: Dataset,
     df: pd.DataFrame,
-):
+) -> None:
+    """Fine-tune the BART model on the multi-label text classification task.
+
+    :param kf: KFold object for cross-validation.
+    :type kf: KFold
+    :param tokenizer: Tokenizer to use for tokenization.
+    :type tokenizer: AutoTokenizer
+    :param ds: Dataset to use for training and evaluation.
+    :type ds: Dataset
+    :param df: DataFrame containing the labels.
+    :type df: pd.DataFrame
+    """    
     for fold, (train_idx, test_idx) in tqdm(
         enumerate(kf.split(ds["text"], ds["labels"])),
         total=NUM_FOLDS,
@@ -88,6 +116,7 @@ def finetune(
 
 
 def main():
+    """The main function to fine-tune the BART model on the multi-label text classification task."""
     # Load the data
     df = load_data("multi_label_dataset.csv", "./articles")
     ds = Dataset.from_dict(get_dict(df))

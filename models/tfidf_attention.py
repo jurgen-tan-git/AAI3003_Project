@@ -1,9 +1,28 @@
+"""TfIdf-based Attention model.
+"""
+
 import torch
 from torch import nn
 from torch.nn.utils.parametrizations import weight_norm
 
 
 class TfIdfAttention(nn.Module):
+    """An attention model for TfIdf features.
+
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param embed_size: Attention embedding size.
+    :type embed_size: int
+    :param hidden_size: Hidden layer sizes.
+    :type hidden_size: list[int]
+    :param n_heads: Number of attention heads.
+    :type n_heads: int
+    :param dropout: Dropout rate.
+    :type dropout: float
+    """
+
     def __init__(
         self,
         n_inputs: int,
@@ -48,6 +67,18 @@ class TfIdfAttention(nn.Module):
 
 
 class TfIdfDense(nn.Module):
+    """A dense model for TfIdf features.
+
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param hidden_size: Hidden layer sizes.
+    :type hidden_size: list[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
+    """
+
     def __init__(
         self,
         n_inputs: int,

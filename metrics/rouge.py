@@ -18,13 +18,14 @@ ARTICLES_DIR = "./articles"
 def summarize(text: str, language: str = "english", sentences_count: int = 5) -> str:
     """Summarize a given text using LSA summarization technique.
 
-    Args:
-        text (str): Text to summarize.
-        language (str, optional): Language for the Tokenizer. Defaults to "english".
-        sentences_count (int, optional): Number of sentences to output. Defaults to 5.
-
-    Returns:
-        str: Summarized text.
+    :param text: Text to summarize.
+    :type text: str
+    :param language: Language for the Tokenizer, defaults to "english"
+    :type language: str, optional
+    :param sentences_count: Number of sentences to output, defaults to 5
+    :type sentences_count: int, optional
+    :return: Summarized text
+    :rtype: str
     """
     parser = PlaintextParser.from_string(text, Tokenizer(language))
     summarizer = LsaSummarizer()
@@ -35,14 +36,13 @@ def summarize(text: str, language: str = "english", sentences_count: int = 5) ->
 def evaluate_summary(summary: str, reference: str) -> RougeType | list[RougeType]:
     """Evaluate the ROUGE scores for a given summary and reference text.
 
-    Args:
-        summary (str): Summary text.
-        reference (str): Reference text.
-
-    Returns:
-        RougeType | list[RougeType]: Resulting ROUGE scores.
+    :param summary: Summary text.
+    :type summary: str
+    :param reference: Reference text.
+    :type reference: str
+    :return: Resulting ROUGE scores.
+    :rtype: RougeType | list[RougeType]
     """
-
     rouge = PyRouge(
         rouge_n=(1, 2, 4),
         rouge_l=True,

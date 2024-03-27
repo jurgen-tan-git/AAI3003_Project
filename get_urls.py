@@ -1,19 +1,28 @@
-import argparse
+"""Get URLs of news articles from Today Online website.
+"""
+
 import logging
 import os
 
-from bs4 import BeautifulSoup, ResultSet
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.firefox import GeckoDriverManager
 from tqdm.auto import tqdm
+from webdriver_manager.firefox import GeckoDriverManager
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)  # Set up logging configuration
 
 
-def scrape_today_online(url, outputfile):
+def scrape_today_online(url: str, outputfile: str | os.PathLike) -> None:
+    """Get URLs of news articles from Today Online website.
+
+    :param url: The URL of the website.
+    :type url: str
+    :param outputfile: The output file to store the URLs.
+    :type outputfile: str | os.PathLike
+    """
     # Set up Firefox WebDriver
     firefox_options = webdriver.FirefoxOptions()
     firefox_options.add_argument("--headless")
@@ -47,6 +56,7 @@ def scrape_today_online(url, outputfile):
 
 
 def main():
+    """The main function to scrape news articles from Today Online website."""
 
     categories = [
         "singapore",

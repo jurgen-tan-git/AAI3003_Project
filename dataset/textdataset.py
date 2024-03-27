@@ -1,3 +1,6 @@
+"""This module contains the ArticleDataset class for loading and preprocessing article data.
+"""
+
 import os
 
 import pandas as pd
@@ -11,26 +14,14 @@ class ArticleDataset(Dataset):
     """
     A PyTorch dataset for loading and preprocessing article data.
 
-    Args:
-        articles_dir (str or os.PathLike): The directory path where the articles are stored.
-        tokenizer (PreTrainedTokenizerBase): The tokenizer used to tokenize the text.
-        max_length (int): The maximum length of the tokenized input.
-
-    Attributes:
-        articles_dir (str or os.PathLike): The directory path where the articles are stored.
-        labelled_csv (str or os.PathLike): The path to the labelled CSV file.
-        tokenizer (PreTrainedTokenizerBase): The tokenizer used to tokenize the text.
-        max_length (int): The maximum length of the tokenized input.
-        articles (list): A list of article texts.
-        labels (list): A list of article labels.
-        categories (list): A list of article categories.
-        label_encoder (LabelEncoder): The label encoder used to encode the article labels.
-
-    Methods:
-        _init_dataset(): Initializes the dataset by loading and preprocessing the articles.
-        __len__(): Returns the number of articles in the dataset.
-        __getitem__(idx): Returns the tokenized input and label for a given index.
-
+    :param articles_dir: Directory containing the articles.
+    :type articles_dir: str | os.PathLike[str]
+    :param labelled_csv: Path to the labelled CSV file.
+    :type labelled_csv: str | os.PathLike[str]
+    :param tokenizer: Tokenizer for tokenizing the articles.
+    :type tokenizer: PreTrainedTokenizerBase
+    :param max_length: Maximum length of the input tokens.
+    :type max_length: int
     """
 
     def __init__(
@@ -82,16 +73,6 @@ class ArticleDataset(Dataset):
         return len(self.articles)
 
     def __getitem__(self, idx):
-        """
-        Returns the tokenized input and label for a given index.
-
-        Args:
-            idx (int): The index of the article.
-
-        Returns:
-            dict: A dictionary containing the tokenized input and the multilabel
-                targets.
-        """
         text = self.articles[idx]
         target = self.targets[idx]
         inputs = self.tokenizer(

@@ -1,7 +1,20 @@
+"""BERT feature extraction dataset.
+"""
+
+import torch
 from torch.utils.data import Dataset
 
+
 class FeatureDataset(Dataset):
-    def __init__(self, features, labels):
+    """Feature extraction dataset.
+
+    :param features: Extracted features from the text.
+    :type features: torch.Tensor
+    :param labels: Encoded labels.
+    :type labels: torch.Tensor
+    """
+
+    def __init__(self, features: torch.Tensor, labels: torch.Tensor):
         self.features = features
         self.labels = labels
 

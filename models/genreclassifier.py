@@ -1,11 +1,22 @@
+"""Genre Classifier model for article genre prediction.
+"""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 
 class GenreClassifier(nn.Module):
-    def __init__(self, input_size, num_classes):
-        super(GenreClassifier, self).__init__()
+    """Genre Classifier model for article genre prediction.
+
+    :param input_size: Input size of the model.
+    :type input_size: int
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    """
+
+    def __init__(self, input_size: int, num_classes: int, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.conv1 = nn.Conv1d(
             in_channels=input_size, out_channels=64, kernel_size=3, stride=1, padding=1
         )
@@ -35,7 +46,13 @@ class GenreClassifier(nn.Module):
 
 
 class MiddleChomp1d(nn.Module):
-    def __init__(self, chomp_size):
+    """Middle chomp layer for 1D convolutional neural networks.
+
+    :param chomp_size: Size of the chomp layer.
+    :type chomp_size: int
+    """
+
+    def __init__(self, chomp_size: int):
         super().__init__()
         self.chomp_size = chomp_size
         self.half_chomp = chomp_size // 2
@@ -45,19 +62,36 @@ class MiddleChomp1d(nn.Module):
 
 
 class GenreClassifierBlock(nn.Module):
+    """Genre Classifier block for 1D convolutional neural networks.
+
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param kernel_size: Size of the kernel.
+    :type kernel_size: int
+    :param stride: Stride of the convolution.
+    :type stride: int
+    :param padding: Padding of the convolution.
+    :type padding: int
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param dilation: Dilation factor.
+    :type dilation: int
+    """
+
     def __init__(
         self,
-        n_inputs,
-        n_outputs,
-        kernel_size,
-        stride,
-        padding,
-        dropout,
-        dilation,
-        *args,
+        n_inputs: int,
+        n_outputs: int,
+        kernel_size: int,
+        stride: int,
+        padding: int,
+        dropout: float,
+        dilation: int,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.conv1 = torch.nn.utils.parametrizations.weight_norm(
             nn.Conv1d(
                 n_inputs,
@@ -114,15 +148,33 @@ class GenreClassifierBlock(nn.Module):
 
 
 class AttentionGenreClassifier(nn.Module):
+    """Attention-based genre classifier model.
+
+    :param num_inputs: Number of input channels.
+    :type num_inputs: int
+    :param num_outputs: Number of output classes.
+    :type num_outputs: int
+    :param num_channels: Number of channels for each level.
+    :type num_channels: int
+    :param kernel_size: Size of the kernel.
+    :type kernel_size: int
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param use_attention: Whether to use attention.
+    :type use_attention: bool
+    :param embed_dim: Embedding dimension for attention, defaults to 768
+    :type embed_dim: int
+    """
+
     def __init__(
         self,
-        num_inputs,
-        num_outputs,
-        num_channels,
-        kernel_size,
-        dropout,
+        num_inputs: int,
+        num_outputs: int,
+        num_channels: int,
+        kernel_size: int,
+        dropout: float,
         use_attention: bool,
-        embed_dim=768,
+        embed_dim: int = 768,
         *args,
         **kwargs,
     ) -> None:

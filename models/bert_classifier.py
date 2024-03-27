@@ -1,12 +1,31 @@
+"""BERT-based classifier models.
+"""
+
 import torch
 from torch import nn
 from torch.nn.utils.parametrizations import weight_norm
 from transformers import BertModel
 
-from models.genreclassifier import AttentionGenreClassifier
-
 
 class GenreClassifierBlockBertMod(nn.Module):
+    """GenreClassifier block with BERT.
+
+    :param n_inputs: Number of input channels.
+    :type n_inputs: int
+    :param n_outputs: Number of output channels.
+    :type n_outputs: int
+    :param kernel_size: Kernel sizes.
+    :type kernel_size: int | tuple[int]
+    :param stride: Stride sizes.
+    :type stride: int | tuple[int]
+    :param padding: Padding sizes.
+    :type padding: int | tuple[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param dilation: Dilation factor.
+    :type dilation: int
+    """
+
     def __init__(
         self,
         *args,
@@ -65,6 +84,7 @@ class GenreClassifierBlockBertMod(nn.Module):
         self._init_weights()
 
     def _init_weights(self):
+        """Initialize the weights of the model."""
         self.conv1.weight.data.normal_(0, 0.01)
         self.conv2.weight.data.normal_(0, 0.01)
         if self.downsample is not None:
@@ -77,9 +97,32 @@ class GenreClassifierBlockBertMod(nn.Module):
 
 
 class AttentionGenreClassifierBertMod(nn.Module):
+    """Modified GenreClassifier with BERT and attention.
+
+    :param num_inputs: Number of input channels.
+    :type num_inputs: int
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param channels: List of channel sizes.
+    :type channels: list[int]
+    :param kernel_size: Kernel sizes.
+    :type kernel_size: int | tuple[int]
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param padding: Padding sizes.
+    :type padding: int | tuple[int]
+    :param use_attention: Enables attention block, defaults to True
+    :type use_attention: bool, optional
+    :param embed_dim: Embedding dimension size, defaults to 768
+    :type embed_dim: int, optional
+    :param max_length: Maximum input length, defaults to 512
+    :type max_length: int, optional
+    :param dilate: Enables dilated layers, defaults to True
+    :type dilate: bool, optional
+    """
+
     def __init__(
         self,
-        *args,
         num_inputs: int,
         num_classes: int,
         channels: list,
@@ -88,11 +131,11 @@ class AttentionGenreClassifierBertMod(nn.Module):
         use_attention: bool = True,
         embed_dim: int = 768,
         max_length: int = 512,
-        padding: int | tuple,
+        padding: int | tuple = 0,
         dilate: bool = True,
         **kwargs
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         layers = []
         num_levels = len(channels)
         self.use_attention = use_attention
@@ -152,8 +195,27 @@ class AttentionGenreClassifierBertMod(nn.Module):
 
 
 class BertWithAttentionClassifier(nn.Module):
-    def __init__(self, model_name, num_classes, max_length, attention_dim=100):
-        super().__init__()
+    """BERT with an attention-based classifier.
+
+    :param model_name: Model name or version to download.
+    :type model_name: str
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param max_length: Maximum input length.
+    :type max_length: int
+    :param attention_dim: Attention dimension size, defaults to 100
+    :type attention_dim: int, optional
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        num_classes: int,
+        max_length: int,
+        attention_dim: int = 100,
+        **kwargs
+    ) -> None:
+        super().__init__(**kwargs)
         self.bert = BertModel.from_pretrained(
             model_name, max_position_embeddings=max_length
         )
@@ -181,16 +243,27 @@ class BertWithAttentionClassifier(nn.Module):
 
 
 class BertWithLinearClassifier(nn.Module):
+    """BERT with a linear classifier.
+
+    :param num_classes: Number of output classes.
+    :type num_classes: int
+    :param max_length: Maximum input length.
+    :type max_length: int
+    :param dropout: Dropout rate.
+    :type dropout: float
+    :param model_name: Model name or version to download, defaults to "bert-base-uncased"
+    :type model_name: str, optional
+    """
+
     def __init__(
         self,
         num_classes: int,
         max_length: int,
         dropout: float,
         model_name: str = "bert-base-uncased",
-        *args,
         **kwargs
-    ):
-        super().__init__(*args, **kwargs)
+    ) -> None:
+        super().__init__(**kwargs)
         self.bert = BertModel.from_pretrained(
             model_name,
             max_position_embeddings=max_length,
