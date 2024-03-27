@@ -55,3 +55,20 @@ Desktop.ini
 # Firefox drivers
 geckodriver.exe
 geckodriver.log
+
+# pyenv
+.python-version
+
+# Data
+articles*/
+summaries*/
+
+# Model checkpoints
+ckpts/
+results/
+
+# Feature extraction
+*.csv
+
+# Scraper data
+URLs/
