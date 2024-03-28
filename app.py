@@ -7,8 +7,6 @@ st.title('TLDR News Summariser For Today Online & Channel News Asia News Article
 
 # User input for the URL
 url = st.text_input('Enter the URL of the news article you want to summarise:')
-# Radio button to select the model
-model = st.radio('Select the model to use:', ['RandomForest', 'DistilBert'])
 
 if st.button('Summarise Article & Predict Category'):
     if url:
