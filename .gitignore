@@ -56,9 +56,22 @@ Desktop.ini
 geckodriver.exe
 geckodriver.log
 
-# Articles
-articles/
-summaries/
+# pyenv
+.python-version
+
+# Data
+articles*/
+summaries*/
+
+# Model checkpoints
+ckpts/
+results/
+
+# Feature extraction
+*.csv
 
 # Scraper data
 URLs/
+
+# Documentation
+docs/
