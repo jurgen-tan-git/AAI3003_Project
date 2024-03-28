@@ -28,6 +28,6 @@ if st.button('Summarise Article & Predict Category(-ies)'):
             else:
                 st.write('Failed to generate a summary for the article. Please check the URL.')
         except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            st.error("Unable to retrieve article")
     else:
         st.write('Please enter a valid URL.')
