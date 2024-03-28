@@ -28,8 +28,9 @@ def load_data(
             if file.endswith(".txt"):
                 with open(os.path.join(root, file), "r", encoding="utf-8") as f:
                     text = f.read()
-                    if use_original_text:
-                        df.loc[df["File"] == file, "Text"] = text
+                    if text is not None and text != "":
+                        if use_original_text:
+                            df.loc[df["File"] == file, "Text"] = text
                     df.loc[df["File"] == file, "fp"] = os.path.join(root, file)
     return df
 
@@ -44,15 +45,18 @@ def get_dict(df: pd.DataFrame) -> dict:
     """
     dataset = {}
     for _, row in df.iterrows():
-        targets = row[2:]
-        labels = df.columns[2:][targets == 1]
+        binary_targets = row[2:-1].to_numpy()
+        labels = df.columns[2:-1][binary_targets == 1]
+        targets = [df.columns[2:-1].get_loc(label) for label in labels]
         labels = list(map(lambda x: x.replace("-", " "), labels))
         if dataset.get("text") is None:
             dataset["text"] = [row["Text"]]
-            dataset["binary_targets"] = [targets]
+            dataset["binary_targets"] = [binary_targets]
+            dataset["targets"] = [targets]
             dataset["labels"] = [labels]
         else:
             dataset["text"].append(row["Text"])
-            dataset["binary_targets"].append(targets)
+            dataset["binary_targets"].append(binary_targets)
+            dataset["targets"].append(targets)
             dataset["labels"].append(labels)
     return dataset

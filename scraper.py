@@ -133,6 +133,61 @@ def scrape_article(url: str, category: str) -> None:
         content_list = extract_article_content(html)
         if not content_list:
             logging.warning("No article content found.")
+            return
+
+        if save_to_file == True and content_list:
+            save_to_file(title, content_list, category)
+            logging.info("Article successfully scraped and saved.")
+        else:
+            return content_list
+
+    except Exception as e:
+        logging.error("An error occurred: %s", str(e))
+
+
+def scrape_article_multiprocessing_safe(
+    url: str, category: str
+) -> tuple[str, str, str] | None:
+    """Scrape an article and return its title, HTML content, and category. This function is multiprocessing-safe.
+
+    :param url: URL of the article.
+    :type url: str
+    :param category: Category of the article.
+    :type category: str
+    :return: A tuple containing the title, HTML content, and category of the article, or None if an error occurred.
+    :rtype: tuple[str, str, str] | None
+    """
+    try:
+        html = get_html_content(url)
+        if not html:
+            logging.error("Failed to retrieve HTML content.")
+            return
+        title = extract_title(html)
+        if not title:
+            logging.error("Failed to extract title.")
+            return
+
+        return title, html, category
+
+    except Exception as e:
+        logging.error("An error occurred: %s", str(e))
+        return
+
+
+def extract_and_save_article(title: str, html: str, category: str) -> None:
+    """Extract and save the article content to a text file.
+
+    :param title: The title of the article.
+    :type title: str
+    :param html: The HTML content of the article.
+    :type html: str
+    :param category: The category of the article.
+    :type category: str
+    """
+    try:
+        content_list = extract_article_content(html)
+        if not content_list:
+            logging.warning("No article content found.")
         save_to_file(title, content_list, category)
         logging.info("Article successfully scraped and saved.")
 

@@ -2,128 +2,150 @@
 text classification task.
 """
 
-import os
+from functools import partial
+from typing import Generator
 
+import numpy as np
 import pandas as pd
-from datasets import Dataset
-from sklearn.model_selection import KFold
-from tqdm.auto import tqdm
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    Trainer,
-    TrainingArguments,
+import torch
+from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
+from datasets import ClassLabel, Dataset, Features, Sequence, Value
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    coverage_error,
+    f1_score,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    multilabel_confusion_matrix,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
+from sklearn.preprocessing import MultiLabelBinarizer
+from transformers import pipeline
 
+from dataset.textdataset import ArticleDataset
 from dataset.transformers_dataset import get_dict, load_data
-from metrics.transformers_evaluate import compute_metrics
+from metrics.auc import godbole_accuracy
 
-BATCH_SIZE = 2  # Batch size for training
-NUM_LABELS = 8  # Number of labels in the dataset
-NUM_FOLDS = 5  # Number of folds for cross-validation
+LABELLED_CSV = "multi_label_dataset.csv"
+ARTICLES_DIR = "./articles"
+NUM_FOLDS = 5
 
 
-def preprocess_dataset(ds: Dataset, tokenizer: AutoTokenizer) -> Dataset:
-    """Preprocess the dataset by tokenizing the text and adding the labels.
+def evaluate(y_true: np.ndarray, y_prob: np.ndarray):
+    """Evaluate the model's performance on a multi-label classification task.
 
-    :param ds: Dataset to preprocess.
-    :type ds: Dataset
-    :param tokenizer: Tokenizer to use for tokenization.
-    :type tokenizer: AutoTokenizer
-    :return: Preprocessed dataset.
-    :rtype: Dataset
+    :param y_true: True labels.
+    :type y_true: np.ndarray
+    :param y_prob: Predicted probabilities.
+    :type y_prob: np.ndarray
     """
+    best_thresh = 0
+    max_f1 = 0.0
+    for thresh in sorted(y_prob.flatten()):
+        y_pred = (y_prob > thresh).astype(int)
+        f1 = f1_score(y_true, y_pred, average="samples")
+        if f1 > max_f1:
+            max_f1 = f1
+            best_thresh = thresh
+    y_pred = y_prob > best_thresh
+    acc = accuracy_score(y_true, y_pred)
+    godbole_acc = godbole_accuracy(y_true, y_pred, "macro")
+    godbole_chance_acc = godbole_accuracy(
+        y_true, np.ones_like(y_true) * np.mean(y_true), "macro"
+    )
+    cov_error = coverage_error(y_true, y_prob)
+    f1 = f1_score(y_true, y_pred, average="micro")
+    lrap = label_ranking_average_precision_score(y_true, y_prob)
+    lrap_chance = label_ranking_average_precision_score(
+        y_true, np.ones_like(y_true) * np.mean(y_true)
+    )
+    lrl = label_ranking_loss(y_true, y_prob)
+    prec = precision_score(y_true, y_pred, average="micro")
+    rec = recall_score(y_true, y_pred, average="micro")
+    y_test_inv = 1 - y_true
+    y_pred_inv = 1 - y_pred
+    spec = recall_score(y_test_inv, y_pred_inv, average="micro")
+    mlm = multilabel_confusion_matrix(y_true, y_pred)
+    auroc = roc_auc_score(y_true, y_prob, average="micro")
+    ap = average_precision_score(y_true, y_prob, average="micro")
+    ap_chance_level = average_precision_score(
+        y_true, np.ones_like(y_true) * np.mean(y_true), average="micro"
+    )
+    fill_rate_pred = np.sum(y_pred) / y_pred.size
+    fill_rate = np.sum(y_true) / y_true.size
 
-    def preprocess_function(sample: dict) -> dict:
-        """Preprocess the sample by tokenizing the text and adding the labels.
+    print(
+        f"acc: {acc:.4f}",
+        f"jaccard_index: {godbole_acc:.4f} / {godbole_chance_acc:.4f} (chance)",
+        f"lrap: {lrap:.4f} / {lrap_chance:.4f} (chance)",
+        f"f1: {f1:.4f}",
+        f"lrl: {lrl:.4f}",
+        f"rec: {rec:.4f}",
+        f"prec: {prec:.4f}",
+        f"spec: {spec: 4f}",
+        f"cov_err: {cov_error:.4f}",
+        f"auroc: {auroc:.4f}",
+        f"ap: {ap:.4f} / {ap_chance_level:.4f} (chance)",
+        f"fill_rate_pred: {fill_rate_pred:.4f} / {fill_rate:.4f} (true)",
+        sep="\n",
+        end="\n\n",
+    )
 
-        :param sample: Sample to preprocess.
-        :type sample: dict
-        :return: Preprocessed sample.
-        :rtype: dict
-        """
-        example = tokenizer(sample["text"], padding=True, truncation=True)
-        labels = sample["binary_targets"]
-        example["labels"] = labels.float()
-        return example
 
-    tokenized_ds = ds.map(preprocess_function, batched=True)
-    return tokenized_ds
+def tokenize_text(instance, tokenizer):
+    return tokenizer(instance["text"], truncation=True)
 
 
-def finetune(
-    kf: KFold,
-    tokenizer: AutoTokenizer,
-    ds: Dataset,
-    df: pd.DataFrame,
-) -> None:
-    """Fine-tune the BART model on the multi-label text classification task.
-
-    :param kf: KFold object for cross-validation.
-    :type kf: KFold
-    :param tokenizer: Tokenizer to use for tokenization.
-    :type tokenizer: AutoTokenizer
-    :param ds: Dataset to use for training and evaluation.
-    :type ds: Dataset
-    :param df: DataFrame containing the labels.
-    :type df: pd.DataFrame
-    """    
-    for fold, (train_idx, test_idx) in tqdm(
-        enumerate(kf.split(ds["text"], ds["labels"])),
-        total=NUM_FOLDS,
-        leave=False,
-        position=0,
-    ):
-        model = AutoModelForSequenceClassification.from_pretrained(
-            "facebook/bart-large-mnli",
-            problem_type="multi_label_classification",
-            num_labels=NUM_LABELS,
-            id2label={str(i): label for i, label in enumerate(df.columns[2:])},
-            label2id={label: i for i, label in enumerate(df.columns[2:])},
-            ignore_mismatched_sizes=True,
-        )
-        if not os.path.exists(f"./results/{fold}/"):
-            os.makedirs(f"./results/{fold}/")
-        training_args = TrainingArguments(
-            output_dir=f"./results/{fold}/",
-            num_train_epochs=2,
-            per_device_train_batch_size=BATCH_SIZE,
-            per_device_eval_batch_size=BATCH_SIZE,
-            weight_decay=0.01,
-            evaluation_strategy="epoch",
-            save_strategy="epoch",
-            load_best_model_at_end=True,
-            push_to_hub=False,
-            bf16=True,
-            learning_rate=2e-5,
-            metric_for_best_model="f1",
-        )
-        train_ds = ds.select(train_idx)
-        test_ds = ds.select(test_idx)
-
-        train_ds = preprocess_dataset(train_ds, tokenizer)
-        test_ds = preprocess_dataset(test_ds, tokenizer)
-
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_ds,
-            eval_dataset=test_ds,
-            tokenizer=tokenizer,
-            compute_metrics=compute_metrics,
-        )
-        trainer.train()
+def get_scores(results: dict, mlb: MultiLabelBinarizer) -> Generator:
+    for result in results:
+        score = result["scores"]
+        labels = result["labels"]
+        scores = [
+            score[labels.index(label)] if label in labels else 0
+            for label in mlb.classes
+        ]
+        yield scores
 
 
 def main():
-    """The main function to fine-tune the BART model on the multi-label text classification task."""
-    # Load the data
-    df = load_data("multi_label_dataset.csv", "./articles")
-    ds = Dataset.from_dict(get_dict(df))
-    kf = KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=42)
-    tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-mnli")
-    ds.set_format(type="torch")
-    finetune(kf, tokenizer, ds, df)
+    df = load_data(LABELLED_CSV, ARTICLES_DIR, use_original_text=True)
+    classes = [x.replace("-", " ") for x in df.columns[2:-1].to_list()]
+    dataset = Dataset.from_dict(
+        get_dict(df),
+        features=Features(
+            {
+                "text": Value("string"),
+                "binary_targets": Sequence(Value("int32")),
+                "targets": Sequence(ClassLabel(num_classes=8, names=list(range(8)))),
+                "labels": Sequence(ClassLabel(names=classes)),
+            }
+        ),
+    )
+    classifier = pipeline(
+        "zero-shot-classification",
+        model="facebook/bart-large-mnli",
+        dtype=torch.bfloat16,
+        device="cuda",
+        fp16=True,
+    )
+    candidate_labels = list(map(lambda x: x.replace(" ", "-"), classes))
+    results = classifier(
+        dataset["text"], candidate_labels=candidate_labels, multi_label=True
+    )
+    mlb = MultiLabelBinarizer(classes=candidate_labels)
+    sample_labels = df[df.columns[2:-1]].apply(
+        lambda x: list(df.columns[2:-1][x == 1]), axis=1
+    )
+    # label_to_dashed_labels = {label: label.replace(" ", "-") for label in classes}
+    # dashed_labels_to_labels = {v: k for k, v in label_to_dashed_labels.items()}
+
+    mlb.fit(sample_labels)
+    y_scores = np.array(list(get_scores(results, mlb)))
+    y_true = np.array(dataset["binary_targets"])
+    evaluate(y_true, y_scores)
 
 
 if __name__ == "__main__":
