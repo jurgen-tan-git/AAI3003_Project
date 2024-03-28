@@ -63,7 +63,7 @@ class ArticleDataset(Dataset):
             if text:
                 self.articles.append(text)
                 self.labels.append(labels)
-                self.targets.append(targets)
+                self.targets.append(targets.to_list())
         self.categories = df.columns[2:].to_list()
 
     def __len__(self):
