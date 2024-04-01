@@ -83,10 +83,12 @@ class ArticleDataset(Dataset):
             max_length=self.max_length,
             truncation_strategy="only_first",
         )
-        return {
+        res = {
             "input_ids": inputs.input_ids,
             "attention_mask": inputs.attention_mask,
-            "token_type_ids": (
-                inputs.token_type_ids if "token_type_ids" in inputs else None
-            ),
-        }, torch.tensor(target)
+        }
+
+        if "token_type_ids" in inputs:
+            res["token_type_ids"] = inputs.token_type_ids
+
+        return res, torch.tensor(target)

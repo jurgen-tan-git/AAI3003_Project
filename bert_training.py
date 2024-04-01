@@ -3,6 +3,7 @@
 
 import math
 import os
+from contextlib import nullcontext
 
 import numpy as np
 import seaborn as sns
@@ -23,19 +24,23 @@ from sklearn.metrics import (
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 
 from dataset.textdataset import ArticleDataset
 from metrics.auc import godbole_accuracy, k_fold_roc_curve
 from models.bert_classifier import BertWithLinearClassifier
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"  # Use GPU if available
+DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"  # Use MPS if available
+DEVICE = "cuda" if torch.cuda.is_available() else DEVICE  # Use GPU if available
 BATCH_SIZE = 4  # Batch size for training
 NUM_EPOCHS = 1  # Number of epochs to train
 MAX_LENGTH = 512  # Maximum length of the input sequence
 NUM_FOLDS = 5  # Number of folds for cross-validation
 THRESHOLD = 0.5  # Threshold for binary classification
 TRAIN = False  # Train the model or evaluate it
+MODEL_PATH = "google-bert/bert-base-uncased"  # BERT model path
+# MODEL_PATH = "distilbert/distilbert-base-uncased"  # DistilBERT model path
+MODEL_NAME = MODEL_PATH.rsplit("/", maxsplit=1)[-1]  # Model name
 
 
 def test_model(
@@ -203,7 +208,11 @@ def train_model(
             running_loss = 0.0
 
             # Mixed Precision
-            with torch.autocast(device_type=DEVICE, dtype=torch.bfloat16):
+            with (
+                torch.autocast(device_type=DEVICE, dtype=torch.bfloat16)
+                if scaler is not None
+                else nullcontext()
+            ):
                 optimizer.zero_grad()
                 squeeze_dim = 1 if len(inputs["input_ids"].shape) == 3 else 0
                 inputs = {
@@ -233,7 +242,7 @@ def train_model(
         line = (
             f"Train Loss: {running_loss:.4f}, "
             + f"Val Loss: {metrics['val_loss']:.4f}, "
-            + f"Val Acc: {metrics['acc']:4f}%"
+            + f"Val Acc: {metrics['acc']*100:03.2f}%"
         )
         iterator.write(line)
         iterator.set_postfix_str(f"LR: {scheduler.get_last_lr()[0]:.4e}")
@@ -248,7 +257,7 @@ def main(train: bool):
     sns.set_theme("paper", "whitegrid")
 
     # Setup the dataset and cross-validation
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     dataset = ArticleDataset(
         "./articles", "./multi_label_dataset.csv", tokenizer, MAX_LENGTH
     )
@@ -269,7 +278,7 @@ def main(train: bool):
         )
         # Initialize the model
         model = BertWithLinearClassifier(
-            len(dataset.categories), MAX_LENGTH, 0.2, "bert-base-uncased"
+            len(dataset.categories), MAX_LENGTH, 0.2, MODEL_PATH
         )
         model.to(DEVICE)
         criterion = nn.BCEWithLogitsLoss()
@@ -290,7 +299,7 @@ def main(train: bool):
             )
         else:
             # Load the model
-            model.load_state_dict(torch.load(f"./ckpts/bert/{fold}/model.pth"))
+            model.load_state_dict(torch.load(f"./ckpts/{MODEL_NAME}/{fold}/model.pth"))
 
         # Evaluate the model
         res = test_model(model, test_loader, True, criterion)
@@ -301,9 +310,9 @@ def main(train: bool):
 
         if train:
             # Save the model
-            if not os.path.exists(f"./ckpts/bert/{fold}"):
-                os.makedirs(f"./ckpts/bert/{fold}")
-            torch.save(model.state_dict(), f"./ckpts/bert/{fold}/model.pth")
+            if not os.path.exists(f"./ckpts/{MODEL_NAME}/{fold}"):
+                os.makedirs(f"./ckpts/{MODEL_NAME}/{fold}")
+            torch.save(model.state_dict(), f"./ckpts/{MODEL_NAME}/{fold}/model.pth")
 
     y = np.concatenate(results["y"])
     chance_level = np.mean(y)
@@ -332,11 +341,11 @@ def main(train: bool):
 
     fig = k_fold_roc_curve(
         model_outputs,
-        "bert-base-uncased",
+        MODEL_NAME,
         8,
         average="weighted",
     )
-    fig.savefig("./ckpts/bert/bert_roc_curve.png")
+    fig.savefig(f"./ckpts/{MODEL_NAME}/auc_curve.png")
 
 
 if __name__ == "__main__":
