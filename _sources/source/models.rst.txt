@@ -1,0 +1,45 @@
+models package
+==============
+
+Submodules
+----------
+
+models.bert\_classifier module
+------------------------------
+
+.. automodule:: models.bert_classifier
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.genreclassifier module
+-----------------------------
+
+.. automodule:: models.genreclassifier
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.learner module
+---------------------
+
+.. automodule:: models.learner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+models.tfidf\_attention module
+------------------------------
+
+.. automodule:: models.tfidf_attention
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: models
+   :members:
+   :undoc-members:
+   :show-inheritance:

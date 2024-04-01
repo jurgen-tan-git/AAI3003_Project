@@ -1,0 +1,37 @@
+metrics package
+===============
+
+Submodules
+----------
+
+metrics.auc module
+------------------
+
+.. automodule:: metrics.auc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+metrics.rouge module
+--------------------
+
+.. automodule:: metrics.rouge
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+metrics.transformers\_evaluate module
+-------------------------------------
+
+.. automodule:: metrics.transformers_evaluate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:

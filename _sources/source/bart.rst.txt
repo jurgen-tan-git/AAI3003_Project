@@ -1,0 +1,7 @@
+bart module
+===========
+
+.. automodule:: bart
+   :members:
+   :undoc-members:
+   :show-inheritance:

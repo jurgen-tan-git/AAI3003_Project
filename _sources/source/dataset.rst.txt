@@ -1,0 +1,45 @@
+dataset package
+===============
+
+Submodules
+----------
+
+dataset.featuredataset module
+-----------------------------
+
+.. automodule:: dataset.featuredataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dataset.textdataset module
+--------------------------
+
+.. automodule:: dataset.textdataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dataset.tfidf module
+--------------------
+
+.. automodule:: dataset.tfidf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dataset.transformers\_dataset module
+------------------------------------
+
+.. automodule:: dataset.transformers_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:

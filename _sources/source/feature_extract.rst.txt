@@ -1,0 +1,7 @@
+feature\_extract module
+=======================
+
+.. automodule:: feature_extract
+   :members:
+   :undoc-members:
+   :show-inheritance:

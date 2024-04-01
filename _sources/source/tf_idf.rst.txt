@@ -1,0 +1,7 @@
+tf\_idf module
+==============
+
+.. automodule:: tf_idf
+   :members:
+   :undoc-members:
+   :show-inheritance:

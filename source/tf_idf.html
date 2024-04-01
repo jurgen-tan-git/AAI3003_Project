@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>tf_idf module &#8212; AAI3003_T9_Project 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-tf_idf">
+<span id="tf-idf-module"></span><h1>tf_idf module<a class="headerlink" href="#module-tf_idf" title="Link to this heading">¶</a></h1>
+<p>This script runs various machine learning models with 5-fold cross validation
+on tf-idf features and evaluates them using various metrics.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="tf_idf.main">
+<span class="sig-prename descclassname"><span class="pre">tf_idf.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tf_idf.main" title="Link to this definition">¶</a></dt>
+<dd><p>Run the main function to train and evaluate models on tf-idf features.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tf_idf.train_and_eval">
+<span class="sig-prename descclassname"><span class="pre">tf_idf.</span></span><span class="sig-name descname"><span class="pre">train_and_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mskf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MultilabelStratifiedKFold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#tf_idf.train_and_eval" title="Link to this definition">¶</a></dt>
+<dd><p>Train and evaluate a model using MultilabelStratifiedKFold cross-validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mskf</strong> (<em>MultilabelStratifiedKFold</em>) – MultilabelStratifiedKFold object</p></li>
+<li><p><strong>model_class</strong> (<em>Callable</em>) – Class of the model to be trained</p></li>
+<li><p><strong>X</strong> (<em>np.ndarray</em>) – Dataset of input features</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray</em>) – Dataset of target labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary of metrics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="tf_idf.train_and_eval_pytorch">
+<span class="sig-prename descclassname"><span class="pre">tf_idf.</span></span><span class="sig-name descname"><span class="pre">train_and_eval_pytorch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mskf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MultilabelStratifiedKFold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">partial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="dataset.html#dataset.tfidf.TfIdfDataset" title="dataset.tfidf.TfIdfDataset"><span class="pre">TfIdfDataset</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#tf_idf.train_and_eval_pytorch" title="Link to this definition">¶</a></dt>
+<dd><p>Train and evaluate a model using MultilabelStratifiedKFold cross-validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mskf</strong> (<em>MultilabelStratifiedKFold</em>) – MultilabelStratifiedKFold object</p></li>
+<li><p><strong>model</strong> (<em>partial</em>) – Class of the model to be trained</p></li>
+<li><p><strong>model_name</strong> (<em>str</em>) – Name of the model</p></li>
+<li><p><strong>ds</strong> (<a class="reference internal" href="dataset.html#dataset.tfidf.TfIdfDataset" title="dataset.tfidf.TfIdfDataset"><em>TfIdfDataset</em></a>) – TfIdfDataset object</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary of metrics</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, float]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">AAI3003_T9_Project</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jurgen Tan, Christopher Kok, Wong Yok Hung, Ng Zi Bin.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/source/tf_idf.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

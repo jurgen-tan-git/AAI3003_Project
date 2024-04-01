@@ -1,0 +1,7 @@
+summarise module
+================
+
+.. automodule:: summarise
+   :members:
+   :undoc-members:
+   :show-inheritance:

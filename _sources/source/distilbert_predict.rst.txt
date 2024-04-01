@@ -1,0 +1,7 @@
+distilbert\_predict module
+==========================
+
+.. automodule:: distilbert_predict
+   :members:
+   :undoc-members:
+   :show-inheritance:
