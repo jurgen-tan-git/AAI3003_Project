@@ -32,6 +32,8 @@ from metrics.auc import godbole_accuracy
 LABELLED_CSV = "multi_label_dataset.csv"
 ARTICLES_DIR = "./articles"
 NUM_FOLDS = 5
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "mps" if torch.backends.mps.is_available() else DEVICE
 
 
 def evaluate(y_true: np.ndarray, y_prob: np.ndarray):
@@ -128,7 +130,7 @@ def main():
         "zero-shot-classification",
         model="facebook/bart-large-mnli",
         dtype=torch.bfloat16,
-        device="cuda",
+        device=DEVICE,
         fp16=True,
     )
     candidate_labels = list(map(lambda x: x.replace(" ", "-"), classes))

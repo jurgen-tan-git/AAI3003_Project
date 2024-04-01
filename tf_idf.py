@@ -37,6 +37,8 @@ NUM_HEADS = 12
 BATCH_SIZE = 32
 NUM_EPOCHS = 50
 THRESHOLD = 0.85
+DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
+DEVICE = "cuda" if torch.cuda.is_available() else DEVICE
 
 
 def train_and_eval(
@@ -211,7 +213,7 @@ def train_and_eval_pytorch(
         learner = Learner(
             model_instance,
             nn.BCEWithLogitsLoss(),
-            torch.device("cuda"),
+            torch.device(DEVICE),
             cbs=[
                 F1Callback(),
                 PlotGraphCallback(),

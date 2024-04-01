@@ -32,14 +32,14 @@ from models.bert_classifier import BertWithLinearClassifier
 
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"  # Use MPS if available
 DEVICE = "cuda" if torch.cuda.is_available() else DEVICE  # Use GPU if available
-BATCH_SIZE = 4  # Batch size for training
+BATCH_SIZE = 2  # Batch size for training
 NUM_EPOCHS = 1  # Number of epochs to train
 MAX_LENGTH = 512  # Maximum length of the input sequence
 NUM_FOLDS = 5  # Number of folds for cross-validation
 THRESHOLD = 0.5  # Threshold for binary classification
 TRAIN = False  # Train the model or evaluate it
-MODEL_PATH = "google-bert/bert-base-uncased"  # BERT model path
-# MODEL_PATH = "distilbert/distilbert-base-uncased"  # DistilBERT model path
+# MODEL_PATH = "google-bert/bert-base-uncased"  # BERT model path
+MODEL_PATH = "distilbert/distilbert-base-uncased"  # DistilBERT model path
 MODEL_NAME = MODEL_PATH.rsplit("/", maxsplit=1)[-1]  # Model name
 
 
@@ -299,7 +299,11 @@ def main(train: bool):
             )
         else:
             # Load the model
-            model.load_state_dict(torch.load(f"./ckpts/{MODEL_NAME}/{fold}/model.pth"))
+            model.load_state_dict(
+                torch.load(
+                    f"./ckpts/{MODEL_NAME}/{fold}/model.pth", map_location=DEVICE
+                )
+            )
 
         # Evaluate the model
         res = test_model(model, test_loader, True, criterion)
