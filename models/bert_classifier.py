@@ -4,7 +4,7 @@
 import torch
 from torch import nn
 from torch.nn.utils.parametrizations import weight_norm
-from transformers import BertModel
+from transformers import AutoModel
 
 
 class GenreClassifierBlockBertMod(nn.Module):
@@ -216,7 +216,7 @@ class BertWithAttentionClassifier(nn.Module):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-        self.bert = BertModel.from_pretrained(
+        self.bert = AutoModel.from_pretrained(
             model_name, max_position_embeddings=max_length
         )
         self.max_length = max_length
@@ -264,7 +264,7 @@ class BertWithLinearClassifier(nn.Module):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-        self.bert = BertModel.from_pretrained(
+        self.bert = AutoModel.from_pretrained(
             model_name,
             max_position_embeddings=max_length,
         )
